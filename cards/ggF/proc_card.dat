@@ -1,0 +1,7 @@
+import model HEL_UFO
+
+# Use NP^2<=1 to generate only SM + SM-BSM int.
+generate p p > h NP^2<=1 @0
+generate p p > h j NP^2<=1 @1
+
+output ggF

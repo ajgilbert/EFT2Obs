@@ -1,0 +1,11 @@
+--- HEPTools/MG5aMC_PY8_interface/MG5aMC_PY8_interface.cc	2019-06-27 13:51:28.000000001 +0200
++++ HEPTools/MG5aMC_PY8_interface/MG5aMC_PY8_interface.cc	2019-06-27 14:07:54.000000001 +0200
+@@ -682,7 +682,7 @@
+               w *=hepmcWeightRescaling;
+ 
+               // Add event weight.
+-              hepmcevt->weights().push_back(w, name+cutTag);
++              hepmcevt->weights().push_back(w, it_w->first);
+               // Update cross section.
+ 
+               sigmaTot[iRun][k] += w;
