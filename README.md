@@ -5,7 +5,9 @@ Automatically parameterise the effect of EFT coefficients on arbitrary observabl
 
 Note that this workflow has only been tested on lxplus.
 
-First run the `setup.sh` script. This will:
+**At the moment LHAPDF is not installed automatically. Please edit `setup.sh` to change the path for `lhapdf-config` if you do not have /cvmfs mounted.**
+
+Then run the `setup.sh` script. This will:
 
  -  Download and compile madgraph_amc@nlo and Rivet.
  -  Apply a patch to the madgraph-pythia8 interface that is needed to make valid hepmc output with stored event weights
