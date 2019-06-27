@@ -29,11 +29,4 @@ xsec / SM for bin 5 [40, 60] = 1.0 + 55.6*cG' + 2.75*c3G + 2.59*c2G
 xsec / SM for bin 6 [60, 100] = 1.0 + 55.6*cG' + 6.1*c3G + 4.9*c2G
 xsec / SM for bin 7 [100, 150] = 1.0 + 55.7*cG' + 12.9*c3G + 9.9*c2G
 xsec / SM for bin 8 [150, 200] = 1.0 + 56*cG' + 23.7*c3G + 16.3*c2G
-``
-
-
-
-
-
-
-
+```
