@@ -25,5 +25,5 @@ if [ -d "${MG_DIR}/${PROCESS}/Events/${RUNLABEL}" ]; then rm -r ${MG_DIR}/${PROC
 ./bin/generate_events pilotrun < mgrunscript
 popd
 
-rivet --analysis=HiggsTemplateCrossSections "${TMPDIR}/fifo.hepmc" -o Rivet.yoda
-yoda2root Rivet.yoda
+rivet --analysis=HiggsTemplateCrossSectionsStage1 "${TMPDIR}/fifo.hepmc" -o Rivet.yoda
+# yoda2root Rivet.yoda

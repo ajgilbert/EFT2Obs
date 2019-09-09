@@ -40,7 +40,7 @@ pushd ${MG_DIR}
 ./bin/mg5_aMC ../cards/${PROCESS}/proc_card.dat
 popd
 
-wget https://phab.hepforge.org/source/rivetbootstraphg/browse/2.7.2/rivet-bootstrap?view=raw -O rivet-bootstrap
+wget https://phab.hepforge.org/source/rivetbootstraphg/browse/3.0.1/rivet-bootstrap?view=raw -O rivet-bootstrap
 bash rivet-bootstrap
 
 source rivet_env.sh
