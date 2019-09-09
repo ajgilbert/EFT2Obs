@@ -5,10 +5,12 @@
 #include "Rivet/Analysis.hh"
 #include "Rivet/Particle.hh"
 #include "Rivet/Projections/FastJets.hh"
+#include "HepMC/GenParticle.h"
 
 // Definition of the StatusCode and Category enums
 #include "HiggsTemplateCrossSections.h"
-#include<vector>
+using HepMC::GenParticle;
+using HepMC::GenVertex;
 
 namespace Rivet {
   
@@ -34,7 +36,7 @@ namespace Rivet {
     /// follow a "propagating" particle and return its last instance
     Particle getLastInstance(Particle ptcl) {
       if ( ptcl.genParticle()->end_vertex() ) {
-	if ( !hasChild(ptcl.genParticle(),ptcl.pdgId()) ) return ptcl;
+	if ( !hasChild(ptcl.genParticle(),ptcl.pid()) ) return ptcl;
 	else return getLastInstance(ptcl.children()[0]);
       }
       return ptcl;
@@ -45,7 +47,7 @@ namespace Rivet {
       const GenVertex* prodVtx = p.genParticle()->production_vertex();
       if (prodVtx == nullptr) return false;
       // for each ancestor, check if it matches any of the input particles
-      for (auto ancestor:particles(prodVtx, HepMC::ancestors)){ 
+      for (auto ancestor: Rivet::HepMCUtils::particles(prodVtx, HepMC::ancestors)){ 
 	for ( auto part:ptcls ) 
 	  if ( ancestor==part.genParticle() ) return true;
       }
@@ -61,13 +63,13 @@ namespace Rivet {
     /// @brief Checks whether the input particle has a child with a given PDGID 
     bool hasChild(const GenParticle *ptcl, int pdgID) {
       for (auto child:Particle(*ptcl).children())
-        if (child.pdgId()==pdgID) return true;
+        if (child.pid()==pdgID) return true;
       return false;
     }
     
     /// @brief Checks whether the input particle has a parent with a given PDGID 
     bool hasParent(const GenParticle *ptcl, int pdgID) {
-      for (auto parent:particles(ptcl->production_vertex(),HepMC::parents))
+      for (auto parent : Rivet::HepMCUtils::particles(ptcl->production_vertex(),HepMC::parents))
         if (parent->pdg_id()==pdgID) return true;
       return false;
     }
@@ -75,7 +77,7 @@ namespace Rivet {
     /// @brief Return true is particle decays to quarks
     bool quarkDecay(const Particle &p) {
       for (auto child:p.children())
-        if (PID::isQuark(child.pdgId())) return true;
+        if (PID::isQuark(child.pid())) return true;
       return false;
     }
     
@@ -124,7 +126,7 @@ namespace Rivet {
 
       GenVertex *HSvtx = event.genEvent()->signal_process_vertex();
       int Nhiggs=0;
-      for ( const GenParticle *ptcl : Rivet::particles(event.genEvent()) ) {
+      for ( const GenParticle *ptcl : Rivet::HepMCUtils::particles(event.genEvent()) ) {
 
         // a) Reject all non-Higgs particles
         if ( !PID::isHiggs(ptcl->pdg_id()) ) continue;
@@ -161,13 +163,13 @@ namespace Rivet {
       FourVector uncatV_v4(0,0,0,0);
       int nWs=0, nZs=0, nTop=0;
       if ( isVH(prodMode) ) {
-	for (auto ptcl:particles(HSvtx,HepMC::children)) {
+	for (auto ptcl : Rivet::HepMCUtils::particles(HSvtx,HepMC::children)) {
 	  if (PID::isW(ptcl->pdg_id())) { ++nWs; cat.V=Particle(ptcl); }
 	  if (PID::isZ(ptcl->pdg_id())) { ++nZs; cat.V=Particle(ptcl); }
 	}
 	if(nWs+nZs>0) cat.V = getLastInstance(cat.V);
 	else {
-	  for (auto ptcl:particles(HSvtx,HepMC::children)) {
+	  for (auto ptcl : Rivet::HepMCUtils::particles(HSvtx,HepMC::children)) {
 	    if (!PID::isHiggs(ptcl->pdg_id())) {
 	      uncatV_decays += Particle(ptcl);
 	      uncatV_p4 += Particle(ptcl).momentum();
@@ -196,13 +198,13 @@ namespace Rivet {
       Particles Ws;
       if ( prodMode==STXS::TTH || prodMode==STXS::TH ){
 	// loop over particles produced in hard-scatter vertex
-      	for ( auto ptcl : particles(HSvtx,HepMC::children) ) {
+      	for ( auto ptcl : Rivet::HepMCUtils::particles(HSvtx,HepMC::children) ) {
       	  if ( !PID::isTop(ptcl->pdg_id()) ) continue;
 	  ++nTop;
 	  Particle top = getLastInstance(Particle(ptcl));
 	  if ( top.genParticle()->end_vertex() ) 
 	    for (auto child:top.children())
-	      if ( PID::isW(child.pdgId()) ) Ws += getLastInstance(child);
+	      if ( PID::isW(child.pid()) ) Ws += getLastInstance(child);
 	}
       }
 
@@ -226,7 +228,7 @@ namespace Rivet {
       for ( auto W:Ws ) if ( W.genParticle()->end_vertex() && !quarkDecay(W) ) leptonicVs += W;
 
       // Obtain all stable, final-state particles
-      const ParticleVector FS = applyProjection<FinalState>(event, "FS").particles();
+      const Particles FS = applyProjection<FinalState>(event, "FS").particles();
       Particles hadrons;
       FourMomentum sum(0,0,0,0), vSum(0,0,0,0), hSum(0,0,0,0);
       for ( const Particle &p : FS ) {
@@ -530,7 +532,7 @@ namespace Rivet {
 
       // Projections for final state particles
       const FinalState FS; 
-      addProjection(FS,"FS");
+      declareProjection(FS,"FS");
 
       // initialize the histograms with for each of the stages
       initializeHistos();
@@ -548,7 +550,7 @@ namespace Rivet {
       HiggsClassification cat = classifyEvent(event,m_HiggsProdMode);
 
       // Fill histograms: categorization --> linerize the categories
-      const double weight = event.weight();
+      const double weight = event.weights()[0];
       m_sumw += weight;
 
       int F=cat.stage0_cat%10, P=cat.stage1_1_cat_pTjet30GeV/100;
@@ -569,9 +571,6 @@ namespace Rivet {
 
       // Fill histograms: variables used in the categorization
       hist_pT_Higgs->fill(cat.higgs.pT(),weight);
-      for (unsigned i = 0; i < 5; ++i) {
-        hist_pT_Higgs_vec[i]->fill(cat.higgs.pT(), event.genEvent()->weights()[i]);
-      }
       hist_y_Higgs->fill(cat.higgs.rapidity(),weight);
       hist_pT_V->fill(cat.V.pT(),weight);
 
@@ -623,25 +622,22 @@ namespace Rivet {
      */
 
     void initializeHistos(){
-      hist_stage0          = bookHisto1D("STXS_stage0",20,0,20);
-      hist_stage1_1_pTjet25  = bookHisto1D("STXS_stage1_1_pTjet25",51,0,51);
-      hist_stage1_1_pTjet30  = bookHisto1D("STXS_stage1_1_pTjet30",51,0,51);
-      hist_stage1_1_fine_pTjet25  = bookHisto1D("STXS_stage1_1_fine_pTjet25",102,0,102);
-      hist_stage1_1_fine_pTjet30  = bookHisto1D("STXS_stage1_1_fine_pTjet30",102,0,102);
-      hist_pT_Higgs    = bookHisto1D("pT_Higgs",80,0,400);
-      hist_y_Higgs     = bookHisto1D("y_Higgs",80,-4,4);
-      hist_pT_V        = bookHisto1D("pT_V",80,0,400);
-      hist_pT_jet1     = bookHisto1D("pT_jet1",80,0,400);
-      hist_deltay_jj   = bookHisto1D("deltay_jj",50,0,10);
-      hist_dijet_mass  = bookHisto1D("m_jj",50,0,2000);
-      hist_pT_Hjj      = bookHisto1D("pT_Hjj",50,0,250);
-      hist_Njets25     = bookHisto1D("Njets25",10,0,10);
-      hist_Njets30     = bookHisto1D("Njets30",10,0,10);
+      book(hist_stage0, "STXS_stage0",20,0,20);
+      book(hist_stage1_1_pTjet25, "STXS_stage1_1_pTjet25",51,0,51);
+      book(hist_stage1_1_pTjet25, "STXS_stage1_1_pTjet25",51,0,51);
+      book(hist_stage1_1_pTjet30, "STXS_stage1_1_pTjet30",51,0,51);
+      book(hist_stage1_1_fine_pTjet25, "STXS_stage1_1_fine_pTjet25",102,0,102);
+      book(hist_stage1_1_fine_pTjet30, "STXS_stage1_1_fine_pTjet30",102,0,102);
+      book(hist_pT_Higgs, "pT_Higgs",80,0,400);
+      book(hist_y_Higgs, "y_Higgs",80,-4,4);
+      book(hist_pT_V, "pT_V",80,0,400);
+      book(hist_pT_jet1, "pT_jet1",80,0,400);
+      book(hist_deltay_jj, "deltay_jj",50,0,10);
+      book(hist_dijet_mass, "m_jj",50,0,2000);
+      book(hist_pT_Hjj, "pT_Hjj",50,0,250);
+      book(hist_Njets25, "Njets25",10,0,10);
+      book(hist_Njets30, "Njets30",10,0,10);
 
-      hist_pT_Higgs_vec.resize(5);
-      for (unsigned i = 0; i < 5; ++i) {
-        hist_pT_Higgs_vec[i] = bookHisto1D("pT_Higgs_"+std::to_string(i) ,20,0,200);
-      }
     }
     /// @}
 
@@ -660,7 +656,6 @@ namespace Rivet {
     Histo1DPtr hist_pT_V, hist_pT_jet1;
     Histo1DPtr hist_deltay_jj, hist_dijet_mass, hist_pT_Hjj;
     Histo1DPtr hist_Njets25, hist_Njets30;
-    std::vector<Histo1DPtr> hist_pT_Higgs_vec;
   };
 
   // the PLUGIN only needs to be decleared when running standalone Rivet
