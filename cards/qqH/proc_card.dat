@@ -1,0 +1,10 @@
+import model HEL_UFO
+
+define p = p b b~
+define j = j b b~
+generate p p > h j j NP<=1 @0
+
+# To generate VBF only, and exclude V(qq)H
+#generate p p > h j j $$ w+ w- z NP<=1 @0
+
+output qqH

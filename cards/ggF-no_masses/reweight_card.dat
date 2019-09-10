@@ -1,0 +1,28 @@
+launch --rwgt_name=rw0
+set NEWCOUP 12 0
+set NEWCOUP 30 0
+set NEWCOUP 33 0
+launch --rwgt_name=rw1
+set NEWCOUP 12 0.00011308
+set NEWCOUP 30 0
+set NEWCOUP 33 0
+launch --rwgt_name=rw2
+set NEWCOUP 12 5.654e-05
+set NEWCOUP 30 0
+set NEWCOUP 33 0
+launch --rwgt_name=rw3
+set NEWCOUP 12 0
+set NEWCOUP 30 0.04
+set NEWCOUP 33 0
+launch --rwgt_name=rw4
+set NEWCOUP 12 0
+set NEWCOUP 30 0.02
+set NEWCOUP 33 0
+launch --rwgt_name=rw5
+set NEWCOUP 12 0
+set NEWCOUP 30 0
+set NEWCOUP 33 0.02
+launch --rwgt_name=rw6
+set NEWCOUP 12 0
+set NEWCOUP 30 0
+set NEWCOUP 33 0.01

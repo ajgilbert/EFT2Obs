@@ -1,10 +1,17 @@
 #!/usr/bin/env bash
+source env.sh
+
 set -x
 set -e
 
+if [[ $# -lt 1 ]]; then
+    echo "Insufficient number of arguments, usage is ./setup_process.sh [name]]"
+    exit 1
+fi
+
+PROCESS=$1
+
 ### SET ENVIRONMENT VARIABLES HERE
-MG_DIR="MG5_aMC_v2_6_5"
-PROCESS="ggF"
 RUNLABEL="pilotrun"
 ###
 

@@ -11,12 +11,12 @@ f = ROOT.TFile('Rivet.root')
 
 hists = []
 
-N_weights = 5
+N_weights = 7
 
 targets = [
-    (2, 12, 1.130800e-04, 2, 'cG\'', 157.913670417), # divide by 16*pi*pi to follow convention
-    (3, 30, 0.1, 4, 'c3G'),
-    (4, 33, 0.1, 12, 'c2G')
+    (2, 12, 0.0001, 2, 'cG'), # divide by 16*pi*pi to follow convention
+    (4, 30, 0.0001, 4, 'c3G'),
+    (6, 33, 0.0001, 12, 'c2G')
 ]
 
 def VariableRebin(hist, binning):
@@ -26,7 +26,7 @@ def VariableRebin(hist, binning):
 
 for i in range(N_weights):
     hists.append(VariableRebin(
-        f.Get('HiggsTemplateCrossSections/pT_Higgs_%i' % i),
+        f.Get('HiggsTemplateCrossSectionsStage1/pT_Higgs[rw%i]' % i),
         [0, 10, 20, 30, 40, 60, 100, 150, 200]))
     hists[-1].Scale(1, 'width')
 
@@ -91,7 +91,7 @@ pads[0].GetFrame().Draw()
 pads[0].RedrawAxis()
 
 # CMS logo
-plot.DrawCMSLogo(pads[0], 'Les Houches', '2019', 11, 0.045, 0.05, 1.0, '', 1.0)
+# plot.DrawCMSLogo(pads[0], 'Les Houches', '2019', 11, 0.045, 0.05, 1.0, '', 1.0)
 plot.DrawTitle(pads[0], 'pp #rightarrow H / Hj', 1)
 plot.DrawTitle(pads[0], 'HEL UFO', 3)
 
