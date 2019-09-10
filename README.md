@@ -5,30 +5,22 @@ Automatically parameterise the effect of EFT coefficients on arbitrary observabl
 
 Note that this workflow has only been tested on lxplus.
 
-**At the moment LHAPDF is not installed automatically. Please edit `setup.sh` to change the path for `lhapdf-config` if you do not have /cvmfs mounted.**
+**At the moment LHAPDF is not installed automatically. Please edit `env.sh` to change the path for `lhapdf-config` if you do not have /cvmfs mounted.**
 
-Then run the `setup.sh` script. This will:
+Then run the following setup scripts in order:
 
- -  Download and compile madgraph_amc@nlo and Rivet.
- -  Apply a patch to the madgraph-pythia8 interface that is needed to make valid hepmc output with stored event weights
- -  Download the Higgs Effective Lagrangian (HEL) UFO model, and then run madgraph to initialise a directory for gluon-fusion Higgs production, using the process definition in `cards/ggF/proc_card.dat`
- -  Compile a slightly modified version of the STXS Rivet plugin, located in the `Classification` directory
+ -  `setup_mg5.sh`: download and compile madgraph_amc@nlo. Applies a patch to the madgraph-pythia8 interface that is needed to make valid hepmc output with stored event weights.
+ -  `setup_model_HEL.sh`: download the Higgs Effective Lagrangian (HEL) UFO model
+ -  `setup_rivet.sh`: Download and install rivet
+ -  `setup_rivet_plugins.sh`: Compile the Higgs STXS rivet plugins, located in the `Classification` directory, we will use in this example
+ - `setup_process.sh ggF`: Run madgraph to initialise a directory for gluon-fusion Higgs production, using the process definition in `cards/ggF/proc_card.dat`
 
-Once this is done, it is necessary to set up the right environment for rivet (should be done in every new session): `source rivet_env.sh`.
+Once this is done, it is necessary to set up the right environment (should be done in every new session): `source env.sh`.
 
-Next, run the `run.sh` script. This will copy the pre-modified madgraph cards to the process directory created above, then generate events which will be showered with pythia8 and passed directly to the Rivet routine. As a demonstration, the Rivet routine will produce histograms of the higgs pT distribution under the different EFT weighting scenarios given in `cards/ggF/reweight_card.dat`. The YODA output file will be converted to ROOT format for further analysis.
+We now need to generate a new `param_card.dat` as well as config file that will steer the subsequent steps. Run: `python make_config.py -p ggF --default-value 1E-4 --limit-pars 12,30,33 --default-value-inactive 0` to do this. Here we select a subset of the EFT coefficients (`12,30,33`) in the HEL UFO to generate the scaling terms for. The non-SM values of these coefficients will be set to `1E-4`, while all others will remain fixed to zero.
 
-Run `python plotEFT.py` to make a plot overlaying these histograms. The script will also compute the linear coefficients in terms of the selected EFT operators and print them to the screen:
+Copy the `param_card.dat` produced by this script into the `cards/ggF/` directory. A `config.json` file is also produced. Run `python make_reweight_card.py config.json reweight_card.dat` to produce a new reweight card and copy this into `cards/ggF/` too.
 
-![alt text](eft_demo.png)
+Next, do `run.sh ggF` to generate the events. This will copy the pre-modified madgraph cards to the process directory created above, then generate events which will be showered with pythia8 and passed directly to the Rivet routine. As a demonstration, the Rivet routine will produce histograms of the STXS classification as well as several kinematic distributions under the different EFT weighting scenarios given in `cards/ggF/reweight_card.dat`.
 
-```
-xsec / SM for bin 1 [0, 10] = 1.0 + 54.9*cG' + 0.605*c3G + 0.64*c2G
-xsec / SM for bin 2 [10, 20] = 1.0 + 55.2*cG' + 0.986*c3G + 0.957*c2G
-xsec / SM for bin 3 [20, 30] = 1.0 + 55*cG' + 1.22*c3G + 1.11*c2G
-xsec / SM for bin 4 [30, 40] = 1.0 + 55.2*cG' + 1.93*c3G + 1.53*c2G
-xsec / SM for bin 5 [40, 60] = 1.0 + 55.6*cG' + 2.75*c3G + 2.59*c2G
-xsec / SM for bin 6 [60, 100] = 1.0 + 55.6*cG' + 6.1*c3G + 4.9*c2G
-xsec / SM for bin 7 [100, 150] = 1.0 + 55.7*cG' + 12.9*c3G + 9.9*c2G
-xsec / SM for bin 8 [150, 200] = 1.0 + 56*cG' + 23.7*c3G + 16.3*c2G
-```
+To calculate the scaling coefficients for a particular distribution run `python get_scaling.py config.json /HiggsTemplateCrossSectionsStage1/HTXS_stage1_pTjet30`.
