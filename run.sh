@@ -23,14 +23,16 @@ sed -i "s@XTMPDIRX@${TMPDIR}@g" ${MG_DIR}/${PROCESS}/Cards/pythia8_card.dat
 pushd ${MG_DIR}/${PROCESS}
 # Create MG config
 {
-  echo "shower=Pythia8"
-  echo "reweight=ON"
+  echo "shower=OFF"
+  echo "reweight=OFF"
+  echo "done"
+  echo "set gridpack True"
   echo "done"
 } > mgrunscript
 
 if [ -d "${MG_DIR}/${PROCESS}/Events/${RUNLABEL}" ]; then rm -r ${MG_DIR}/${PROCESS}/Events/${RUNLABEL}; fi
-./bin/generate_events pilotrun < mgrunscript
+cat mgrunscript | ./bin/generate_events pilotrun -n
 popd
 
-rivet --analysis=HiggsTemplateCrossSectionsStage1 "${TMPDIR}/fifo.hepmc" -o Rivet.yoda
-# yoda2root Rivet.yoda
+# rivet --analysis=HiggsTemplateCrossSectionsStage1 "${TMPDIR}/fifo.hepmc" -o Rivet.yoda
+# yoda2root Rivet.yodaHEPMCoutput:file         = fifo@/tmp/agilbert/fifo.hepmc

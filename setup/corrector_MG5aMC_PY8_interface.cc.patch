@@ -1,0 +1,18 @@
+--- HEPTools/MG5aMC_PY8_interface/MG5aMC_PY8_interface.cc	2020-01-07 14:44:26.000000001 +0100
++++ HEPTools/MG5aMC_PY8_interface/MG5aMC_PY8_interface.cc	2020-01-07 13:38:13.000000001 +0100
+@@ -22,6 +22,7 @@
+ 
+ #include "SyscalcVeto.h"
+ #include "MultiHist.h"
++#include "WeightCorrector.h"
+ 
+ // Function implementing the CKKWL veto.
+ double ckkwlWeight( int nHard, double tmsHard,
+@@ -713,6 +714,7 @@
+         tag = "smin=" + convert.str();
+         hepmcevt->weights().push_back(syscalc->smin(), tag);
+       }
++      CorrectWeights(hepmcevt->weights());
+ 
+       // Fill HepMC event
+       ToHepMC.fill_next_event( pythia, hepmcevt );

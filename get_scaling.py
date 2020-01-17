@@ -3,181 +3,197 @@
 from array import array
 import math
 import sys
-import numpy as np
 import json
-# import argparse
+import argparse
 import yoda
 
+
+def BinStats(b):
+    if b.numEntries == 0:
+        return [0., 0.]
+    mean = b.sumW / b.numEntries
+    stderr2 = (b.sumW2 / b.numEntries) - math.pow(mean, 2)
+    if stderr2 < 0.:
+        stderr = 0.
+    else:
+        stderr = math.sqrt(stderr2 / b.numEntries)
+    return [mean, stderr]
+
+
+def Translate(arg, translations):
+    if arg in translations:
+        return translations[arg]
+    else:
+        return arg
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--input', '-i', default="Rivet.yoda")
+parser.add_argument('--output', '-o', default=None)
+parser.add_argument('--config', '-c', default="Rivet.yoda")
+parser.add_argument('--hist', default='/HiggsTemplateCrossSectionsStage1/HTXS_stage1_pTjet30')
+parser.add_argument('--exclude-rel', default=None, help="Exclude terms with magnitude below this value relative to largest")
+parser.add_argument('--rebin', default=None, help="Comma separated list of new bin edges")
+parser.add_argument('--save', default='json', help="Comma separated list of output formats (json, txt, latex)")
+parser.add_argument('--translate-tex', default=None, help="json file to translate parameter names to latex")
+args = parser.parse_args()
+
+
+with open(args.config) as jsonfile:
+    cfg = json.load(jsonfile)
+pars = cfg['parameters']
+defs = cfg['parameter_defaults']
+
+if args.output is None:
+    auto_name = args.hist
+    if auto_name.startswith('/'):
+        auto_name = auto_name[1:]
+    args.output = auto_name.replace('/', '_')
+
+save_formats = args.save.split(',')
+
+translate_tex = {}
+if args.translate_tex is not None:
+    with open(args.translate_tex) as jsonfile:
+        translate_tex = json.load(jsonfile)
+
 # hname = '/HiggsTemplateCrossSectionsStage1/HTXS_stage1_pTjet30'
-hname = sys.argv[2]
+hname = args.hist
 
-aos = yoda.read("Rivet.yoda", asdict=False)
-# print aos
+aos = yoda.read(args.input, asdict=True)
 
-hists = [h for h in aos if h.path.startswith(hname)]
-hists = hists[1:]  # skip the first one
+n_pars = len(pars)
+n_hists = 1 + n_pars * 2 + (n_pars * n_pars - n_pars) / 2
+
+hists = []
+for i in xrange(n_hists):
+    hists.append(aos['%s[rw%.4i]' % (hname, i)])
+
+#hists = [h for h in aos if h.path.startswith(hname)]
+#hists = hists[1:]  # skip the first one
 print hists
 
-for h in hists:
-    print h.path, h.sumW(), math.sqrt(h.sumW2())
+# rebin = None
+if args.rebin is not None:
+    rebin = [float(X) for X in args.rebin.split(',')]
+    for h in hists:
+        h.rebinTo(rebin)
+# for h in hists:
+#     print h
+#     print h.path, h.sumW(), math.sqrt(h.sumW2())
 
-# help(hists[0])
 
 nbins = hists[0].numBins
-vals = np.array([h.areas() for h in hists])
-print vals
 
 
-with open(sys.argv[1]) as jsonfile:
-    pars = json.load(jsonfile)
+res = {
+    "edges": list(hists[0].xEdges()),
+    "areas": list(hists[0].areas()),
+    "parameters": [X['name'] for X in pars],
+    "bins": []
+}
+
+for p in pars:
+    for k in defs:
+        if k not in p:
+            p[k] = defs[k]
+
+n_divider = 65
 
 
-lin_coeffs = []
-sq_coeffs = []
+def PrintEntry(label, val, err):
+    print '%-20s | %12.4f | %12.4f | %12.4f' % (label, val, err, abs(err / val))
 
-for ip in xrange(len(pars)):
-    print '>>> Solving %s' % pars[ip]['name']
-    x = np.array([vals[0], vals[ip * 2 + 1], vals[ip * 2 + 2]])
-    x = np.divide(x, vals[0], out=np.ones_like(x), where=(vals[0] !=0))
-    # print x[0], x[1], x[2]
-
-    x[1] = x[1] - x[0]
-    x[2] = x[2] - x[0]
-
-    c1 = pars[ip]['step'] / 2.
-    c2 = pars[ip]['step']
-
-    c1_2 = pow(c1, 2)
-    c2_2 = pow(c2, 2)
-
-    a1 = (x[1] - (c1_2 / c2_2) * x[2]) / (c1 - c1_2 / c2)
-    a2 = (x[1] - c1 * a1) / c1_2
-
-    lin_coeffs.append(a1)
-    sq_coeffs.append(a2)
-    print a1
-    print a2
 
 for ib in xrange(nbins):
-    line = 'Bin %-10i:' % ib
+    terms = []
+    sm = BinStats(hists[0].bins[ib])
+    print '-' * n_divider
+    print 'Bin %-4i numEntries: %-10i mean: %-10.3g stderr: %-10.3g' % (ib, hists[0].bins[ib].numEntries, sm[0], sm[1])
+    print '-' * n_divider
+    if sm[0] == 0:
+        res["bins"].append(terms)
+        continue
+    else:
+        print '%-20s | %12s | %12s | %12s' % ('Term', 'Val', 'Uncert', 'Rel. uncert.')
+        print '-' * n_divider
     for ip in xrange(len(pars)):
-        line += '%10.1f*%s' % (lin_coeffs[ip][ib], pars[ip]['name'])
-    print line
-
-for ib in xrange(nbins):
-    line = 'Bin %-10i:' % ib
+        lin = BinStats(hists[ip * 2 + 1].bins[ib])
+        if lin[0] == 0.:
+            continue
+        lin[0] = lin[0] / (sm[0] * pars[ip]['val'])
+        lin[1] = lin[1] / (sm[0] * pars[ip]['val'])
+        PrintEntry(pars[ip]['name'], lin[0], lin[1])
+        terms.append([lin[0], lin[1], pars[ip]['name']])
     for ip in xrange(len(pars)):
-        line += '%10.1f*%s^2' % (sq_coeffs[ip][ib], pars[ip]['name'])
-    print line
-# yoda.plotting.plot(hists[1:4], outfile='test.pdf', plotkeys={}, ratio=None)
+        sqr = BinStats(hists[ip * 2 + 2].bins[ib])
+        if sqr[0] == 0.:
+            continue
+        sqr[0] = sqr[0] / (sm[0] * pars[ip]['val'] * pars[ip]['val'])
+        sqr[1] = sqr[1] / (sm[0] * pars[ip]['val'] * pars[ip]['val'])
 
-# ROOT.PyConfig.IgnoreCommandLineOptions = True
-# ROOT.gROOT.SetBatch(ROOT.kTRUE)
-# ROOT.TH1.AddDirectory(False)
-# plot.ModTDRStyle()
+        PrintEntry('%s^2' % pars[ip]['name'], sqr[0], sqr[1])
+        # print '(%f +/- %f) * %s^2 (%f)' % (sqr[0], sqr[1], pars[ip]['name'], sqr[1]/sqr[0])
+        terms.append([sqr[0], sqr[1], pars[ip]['name'], pars[ip]['name']])
+    ic = 0
+    for ix in xrange(0, len(pars)):
+        for iy in xrange(ix + 1, len(pars)):
+            cross = BinStats(hists[1 + (len(pars) * 2) + ic].bins[ib])
+            if cross[0] != 0.:
+                cross[0] = cross[0] / (sm[0] * pars[ix]['val'] * pars[iy]['val'])
+                cross[1] = cross[1] / (sm[0] * pars[ix]['val'] * pars[iy]['val'])
+                # print '(%f +/- %f) * %s *%s (%f)' % (cross[0], cross[1], pars[ix]['name'], pars[iy]['name'], cross[1]/cross[0])
+                PrintEntry('%s * %s' % (pars[ix]['name'], pars[iy]['name']), cross[0], cross[1])
+                terms.append([cross[0], cross[1], pars[ix]['name'], pars[iy]['name']])
+            ic += 1
+    filtered_terms = []
+    for term in terms:
+        if term[0] < 1E-5:
+            continue
+        filtered_terms.append(term)
+    res["bins"].append(filtered_terms)
 
-# f = ROOT.TFile('Rivet.root')
+if 'json' in save_formats:
+    print '>> Saving histogram parametrisation to %s.json' % args.output
+    with open('%s.json' % args.output, 'w') as outfile:
+            outfile.write(json.dumps(res, sort_keys=False, indent=2, separators=(',', ': ')))
 
-# hists = []
+if 'txt' in save_formats:
+    txt_out = []
+    for ib in xrange(nbins):
+        line = '%g-%g:1' % (res['edges'][ib], res['edges'][ib + 1])
+        for term in res['bins'][ib]:
+            terms = []
+            terms.append('%.3f' % term[0])
+            terms.extend(term[2:])
+            line += (' + ' + (' * '.join(terms)))
+        txt_out.append(line)
+    with open('%s.txt' % args.output, 'w') as outfile:
+            outfile.write('\n'.join(txt_out))
 
-# N_weights = 5
+if 'tex' in save_formats:
+    txt_out = []
+    txt_out.append(r"""\begin{table}[htb]
+    \centering
+    \setlength\tabcolsep{10pt}
+    \begin{tabular}{|c|c|}
+        \hline""")
+    for ib in xrange(nbins):
+        line = '$%g$--$%g$ & ' % (res['edges'][ib], res['edges'][ib + 1])
+        line += r"""\parbox{0.8\columnwidth}{$1 """
+        for term in res['bins'][ib]:
+            terms = []
+            terms.append('%.1f\\,' % term[0])
+            if len(term[2:]) == 2 and term[2] == term[3]:
+                terms.append('{%s}^{2}' % Translate(term[2], translate_tex))
+            else:
+                terms.extend([Translate(X, translate_tex) for X in term[2:]])
+            line += (' + ' + ('\\,'.join(terms)))
+        line += """$} \\\\"""
+        txt_out.append(line)
+        txt_out.append("""\\hline""")
+    txt_out.append(r"""\end{tabular}
+    \end{table}""")
+    with open('%s.tex' % args.output, 'w') as outfile:
+            outfile.write('\n'.join(txt_out))
 
-# targets = [
-#     (2, 12, 1.130800e-04, 2, 'cG\'', 157.913670417), # divide by 16*pi*pi to follow convention
-#     (3, 30, 0.1, 4, 'c3G'),
-#     (4, 33, 0.1, 12, 'c2G')
-# ]
-
-# def VariableRebin(hist, binning):
-#     newhist = hist.Rebin(len(binning) - 1, "", array('d', binning))
-#     return newhist
-
-
-# for i in range(N_weights):
-#     hists.append(VariableRebin(
-#         f.Get('HiggsTemplateCrossSections/pT_Higgs_%i' % i),
-#         [0, 10, 20, 30, 40, 60, 100, 150, 200]))
-#     hists[-1].Scale(1, 'width')
-
-
-# canv = ROOT.TCanvas('eft_demo', '')
-# pads = plot.TwoPadSplit(0.27, 0.01, 0.01)
-
-# # Get the data and create axis hist
-# h_nominal = hists[0]
-
-# h_axes = [h_nominal.Clone() for x in pads]
-# for h in h_axes:
-#     h.Reset()
-
-# h_axes[1].GetXaxis().SetTitle('Higgs p_{T} (GeV)')
-
-# h_axes[0].GetYaxis().SetTitle('d#sigma/dp_{T}')
-# h_axes[0].Draw()
-# if True:
-#     pads[0].SetLogy()
-#     h_axes[0].SetMinimum(1E-4)
-
-# # A dict to keep track of the hists
-# legend = ROOT.TLegend(0.60, 0.86 - 0.04 * 5, 0.90, 0.91, '', 'NBNDC')
-
-# legend.AddEntry(h_nominal, 'SM', 'L')
-
-# plot.Set(h_nominal, LineColor=1, LineWidth=2)
-
-# h_nominal.Draw('HISTSAMEE')
-
-# for tgt in targets:
-#     plot.Set(hists[tgt[0]], LineColor=tgt[3], LineWidth=2)
-#     hists[tgt[0]].Draw('HISTSAME')
-#     ci = tgt[2]
-#     if len(tgt) >= 6:
-#         ci = ci * tgt[5]
-#     legend.AddEntry(hists[tgt[0]], '%s = %.3g' % (tgt[4], ci), 'L')
-
-
-# plot.FixTopRange(pads[0], plot.GetPadYMax(pads[0]), 0.43)
-# legend.Draw()
-
-# # # Do the ratio plot
-# pads[1].cd()
-# pads[1].SetGrid(0, 1)
-# h_axes[1].Draw()
-
-# ratio_hists = []
-# for h in hists:
-#     ratio_hists.append(plot.MakeRatioHist(h, hists[0], False, False))
-# for tgt in targets:
-#     ratio_hists[tgt[0]].Draw('HISTSAME')
-
-# plot.SetupTwoPadSplitAsRatio(
-#     pads, plot.GetAxisHist(
-#         pads[0]), plot.GetAxisHist(pads[1]), 'Ratio to SM', True, 0.0, 5.0)
-
-# # Go back and tidy up the axes and frame
-# pads[0].cd()
-# pads[0].GetFrame().Draw()
-# pads[0].RedrawAxis()
-
-# # CMS logo
-# plot.DrawCMSLogo(pads[0], 'Les Houches', '2019', 11, 0.045, 0.05, 1.0, '', 1.0)
-# plot.DrawTitle(pads[0], 'pp #rightarrow H / Hj', 1)
-# plot.DrawTitle(pads[0], 'HEL UFO', 3)
-
-
-# canv.Print('.png')
-# canv.Print('.pdf')
-
-# for ib in xrange(1, h_nominal.GetNbinsX() + 1):
-#     line = 'xsec / SM for bin %i [%g, %g] = 1.0' % (ib, h_nominal.GetXaxis().GetBinLowEdge(ib), h_nominal.GetXaxis().GetBinUpEdge(ib))
-#     for tgt in targets:
-#         x_tot = hists[tgt[0]].GetBinContent(ib)
-#         x_sm = h_nominal.GetBinContent(ib)
-#         ci = tgt[2]
-#         x_int = (x_tot - x_sm) / ci
-#         x_int = x_int / x_sm
-#         if len(tgt) >= 6:
-#             x_int = x_int / tgt[5]
-#         sign = '+' if x_int >= 0 else '-'
-#         line += ' %s %.3g*%s' % (sign, abs(x_int), tgt[4])
-#     print line
+#\parbox{0.6\columnwidth}{$175\:c_{WW}\,\!^{2} + 14.3\:c_{B}\,\!^{2} + 10.4\:c_{HW}\,\!^{2} + 7.78\:c_{A}\,\!^{2} + 97.5\:c_{WW}\,c_{B} + 74.5\:c_{WW}\,c_{HW} + 64.2\:c_{WW}\,c_{A} + 21\:c_{B}\,c_{HW} + 20.1\:c_{B}\,c_{A} + 12.8\:c_{HW}\,c_{A}$} \\
