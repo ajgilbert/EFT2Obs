@@ -26,9 +26,8 @@
 #*********************************************************************
 # Number of events and rnd seed                                      *
 # Warning: Do not generate more than 1M events in a single run       *
-# If you want to run Pythia, avoid more than 50k events in a run.    *
 #*********************************************************************
-  50000 = nevents ! Number of unweighted events requested 
+  10000 = nevents ! Number of unweighted events requested 
   0   = iseed   ! rnd seed (0=assigned automatically=default))
 #*********************************************************************
 # Collider type and energy                                           *
@@ -43,7 +42,7 @@
 #*********************************************************************
 # PDF CHOICE: this automatically fixes also alpha_s and its evol.    *
 #*********************************************************************
-     nn23lo    = pdlabel     ! PDF set                                     
+     nn23lo1    = pdlabel     ! PDF set                                     
      230000    = lhaid     ! if pdlabel=lhapdf, this is the lhapdf number
 # To see heavy ion options: type "update ion_pdf"
 #*********************************************************************
@@ -68,13 +67,13 @@
 #*********************************************************************
 # Matching parameter (MLM only)
 #*********************************************************************
- 1 = ickkw            ! 0 no matching, 1 MLM
+ 0 = ickkw            ! 0 no matching, 1 MLM
  1.0 = alpsfact         ! scale factor for QCD emission vx
  False = chcluster        ! cluster only according to channel diag
  4 = asrwgtflavor     ! highest quark flavor for a_s reweight
- True  = auto_ptj_mjj  ! Automatic setting of ptj and mjj if xqcut >0
+ False  = auto_ptj_mjj  ! Automatic setting of ptj and mjj if xqcut >0
                                    ! (turn off for VBF and single top processes) 
- 10.0   = xqcut   ! minimum kt jet measure between partons
+ 0.0   = xqcut   ! minimum kt jet measure between partons
 #*********************************************************************
 #
 #*********************************************************************
@@ -121,19 +120,9 @@
  -1.0  = missetmax ! maximum missing Et (sum of neutrino's momenta)
  {} = pt_min_pdg ! pt cut for other particles (use pdg code). Applied on particle and anti-particle
  {}	= pt_max_pdg ! pt cut for other particles (syntax e.g. {6: 100, 25: 50}) 
-#*********************************************************************
-# Minimum and maximum E's (in the center of mass frame)              *
-#*********************************************************************
-  0.0  = ej     ! minimum E for the jets 
-  0.0  = eb     ! minimum E for the b 
-  0.0  = ea     ! minimum E for the photons 
-  0.0  = el     ! minimum E for the charged leptons 
-  -1.0   = ejmax ! maximum E for the jets
- -1.0   = ebmax ! maximum E for the b
- -1.0   = eamax ! maximum E for the photons
- -1.0   = elmax ! maximum E for the charged leptons
- {} = e_min_pdg ! E cut for other particles (use pdg code). Applied on particle and anti-particle
- {} = e_max_pdg ! E cut for other particles (syntax e.g. {6: 100, 25: 50}) 
+#
+# For display option for energy cut in the partonic center of mass frame type 'update ecut'
+#
 #*********************************************************************
 # Maximum and minimum absolute rapidity (for max, -1 means no cut)   *
 #*********************************************************************
@@ -274,8 +263,8 @@
 # Store info for systematics studies                                 *
 # WARNING: Do not use for interference type of computation           *
 #*********************************************************************
-   False  = use_syst      ! Enable systematics studies
+   True  = use_syst      ! Enable systematics studies
 #
-none = systematics_program ! none, systematics [python], SysCalc [depreceted, C++]
+systematics = systematics_program ! none, systematics [python], SysCalc [depreceted, C++]
 ['--mur=0.5,1,2', '--muf=0.5,1,2', '--pdf=errorset'] = systematics_arguments ! see: https://cp3.irmp.ucl.ac.be/projects/madgraph/wiki/Systematics#Systematicspythonmodule
 # Syscalc is deprecated but to see the associate options type'update syscalc'

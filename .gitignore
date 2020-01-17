@@ -6,7 +6,7 @@ __pycache__/
 # C extensions
 *.so
 
-Rivet*/
+Rivet-*/
 YODA*/
 MG5_aMC_v*/
 fastjet-*/

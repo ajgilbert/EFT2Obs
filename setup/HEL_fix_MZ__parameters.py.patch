@@ -1,0 +1,11 @@
+--- parameters.py.orig	2020-01-17 16:38:13.000000001 +0100
++++ parameters.py	2020-01-17 16:38:24.000000001 +0100
+@@ -736,7 +736,7 @@
+ MZ = Parameter(name = 'MZ',
+                nature = 'internal',
+                type = 'real',
+-               value = 'cmath.sqrt((gw**2*vev**2*(1 - cT + (ee**2*(cw**2*cWW + cB*sw**2 + 4*cA*sw**4)*vev**2)/(2.*cw**2*MW**2*sw**2)))/cw**2)/2.',
++               value = '91.188',
+                texname = 'M_Z')
+ 
+ g1 = Parameter(name = 'g1',

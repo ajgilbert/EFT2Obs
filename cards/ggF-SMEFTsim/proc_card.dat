@@ -1,0 +1,10 @@
+set stdout_level DEBUG
+import model SMEFTsim_A_U35_MwScheme_UFO_v2_1-test
+
+define j2 = u c d s u~ c~ d~ s~
+
+generate p p > h / j2 l+ l- vl vl~ h a W+ W- Z NP<=1 @0
+add process p p > h j / j2 l+ l- vl vl~ h a W+ W- Z NP<=1 @1
+# add process p p > h j j / j2 l+ l- vl vl~ h a W+ W- Z NP<=1 @2
+
+output ggF-SMEFTsim
