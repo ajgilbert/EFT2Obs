@@ -1,8 +1,5 @@
-# import ROOT
-# import plotting as plot
 from array import array
 import math
-import sys
 import json
 import argparse
 import yoda
@@ -56,7 +53,6 @@ if args.translate_tex is not None:
     with open(args.translate_tex) as jsonfile:
         translate_tex = json.load(jsonfile)
 
-# hname = '/HiggsTemplateCrossSectionsStage1/HTXS_stage1_pTjet30'
 hname = args.hist
 
 aos = yoda.read(args.input, asdict=True)
@@ -68,19 +64,12 @@ hists = []
 for i in xrange(n_hists):
     hists.append(aos['%s[rw%.4i]' % (hname, i)])
 
-#hists = [h for h in aos if h.path.startswith(hname)]
-#hists = hists[1:]  # skip the first one
-print hists
+# print hists
 
-# rebin = None
 if args.rebin is not None:
     rebin = [float(X) for X in args.rebin.split(',')]
     for h in hists:
         h.rebinTo(rebin)
-# for h in hists:
-#     print h
-#     print h.path, h.sumW(), math.sqrt(h.sumW2())
-
 
 nbins = hists[0].numBins
 
@@ -158,6 +147,7 @@ if 'json' in save_formats:
             outfile.write(json.dumps(res, sort_keys=False, indent=2, separators=(',', ': ')))
 
 if 'txt' in save_formats:
+    print '>> Saving histogram parametrisation to %s.txt' % args.output
     txt_out = []
     for ib in xrange(nbins):
         line = '%g-%g:1' % (res['edges'][ib], res['edges'][ib + 1])
@@ -171,6 +161,7 @@ if 'txt' in save_formats:
             outfile.write('\n'.join(txt_out))
 
 if 'tex' in save_formats:
+    print '>> Saving histogram parametrisation to %s.tex' % args.output
     txt_out = []
     txt_out.append(r"""\begin{table}[htb]
     \centering
@@ -196,4 +187,3 @@ if 'tex' in save_formats:
     with open('%s.tex' % args.output, 'w') as outfile:
             outfile.write('\n'.join(txt_out))
 
-#\parbox{0.6\columnwidth}{$175\:c_{WW}\,\!^{2} + 14.3\:c_{B}\,\!^{2} + 10.4\:c_{HW}\,\!^{2} + 7.78\:c_{A}\,\!^{2} + 97.5\:c_{WW}\,c_{B} + 74.5\:c_{WW}\,c_{HW} + 64.2\:c_{WW}\,c_{A} + 21\:c_{B}\,c_{HW} + 20.1\:c_{B}\,c_{A} + 12.8\:c_{HW}\,c_{A}$} \\

@@ -20,7 +20,7 @@ for p in pars:
     for k in defs:
         if k not in p:
             p[k] = defs[k]
-print pars
+# print pars
 
 output = []
 
@@ -41,7 +41,7 @@ for i in xrange(len(pars)):
 
 for i in xrange(len(pars)):
     for j in xrange(i + 1, len(pars)):
-        print i,j
+        # print i,j
         vals = list(initvals)
         vals[i] = pars[i]['val']
         vals[j] = pars[j]['val']
@@ -52,3 +52,5 @@ for i in xrange(len(pars)):
 if len(sys.argv) > 2:
     with open(sys.argv[2], 'w') as outfile:
             outfile.write('\n'.join(output))
+
+print '>> Created %s with %i reweighting points' % (sys.argv[2], current_i)
