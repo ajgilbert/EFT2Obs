@@ -4,16 +4,19 @@ A tool to automatically parametrize the effect of EFT coefficients on arbitrary 
 
 ---
 
-The assumption is that the cross section for a bin i can be expressed as the sum:
+The assumption is that the cross section for a bin i can be expressed as the sum
+
+![cross section equation](/resources/docs/sigma_eqn.png)
 
 where  σ_int is the leading term in the EFT expansion (going as 1/Λ^2), and accounts for the interference with the SM amplitude. The SM-independent term is labelled as σ_BSM (going as 1/Λ4).
 
 Dividing through by the SM cross section, σ_SM, provides a scaling function for each bin
 
+![relative cross section equation](/resources/docs/mu_eqn.png)
 
 which parametrizes deviations in the cross section in terms of the c_j parameters. The EFT2Obs tool determines the coefficients A_j and B_jk by generating events in which matrix element weights for different c_j values are embedded.
 
-Note that this workflow has only been tested on lxplus so far, and for CMS users please ensure the CMSSW environment is **not** set when running scripts in EFT2Obs.
+Note that this workflow has only been tested on lxplus so far, and for CMS users please ensure the CMSSW environment is **not set** when running scripts in EFT2Obs.
 
 ## Initial setup
 
@@ -56,6 +59,8 @@ The Rivet routines which define the fiducial regions and obserbables of interest
 ## Process-specific workflow
 
 The main steps for defining a process, generating events and extracting scaling factors for observables are outlined below:
+
+![workflow](/resources/docs/EFT2Obs.jpeg)
 
 In this section for clarity we will follow a specific example, ZH production in the HEL model with the STXS Rivet routine, but the steps are generic and it should be straightforward to run with other processes or models.
 
@@ -131,7 +136,7 @@ The `--pars` option supports multiple arguments of the form `[BLOCK]:[ID1],[ID2]
     ]
 }
 ```
-All properties in the `parameter_defaults` block are assumed to apply to each parameter specified in the `parameters` list, however these can be modified on a parameter-by-parameter basis by setting, e.g. `{"index": 4, "name": "cu", "val": 0.02},`.
+All properties in the `parameter_defaults` block are assumed to apply to each parameter specified in the `parameters` list, however these can be modified on a parameter-by-parameter basis by setting, e.g. `{"index": 4, "name": "cu", "val": 0.02}`.
 
 Note that all parameters in the specified blocks not explicitly listed here will be set to `default_val` in the `inactive` part of the config. This will usually correspond to the SM value for the parameters. If some parameters should take a different value then this can be set with the argument `--set-inactive [BLOCK]:[ID1]=[VAL1],[ID2]=[VAL2] ...`.
 
@@ -253,6 +258,8 @@ The output in `json` format is intended for further processing. It contains info
 
 **HiggsTemplateCrossSections_pT_V.tex**
 
+![tex table](/resources/docs/tex_table.png)
+
 A script is available for plotting the histogram overlaying the expectation for arbitrary values of the parameters. For this ROOT (and the PyROOT interface) must be available. The script relies only on the json output file from the above step, for example:
 
 ```sh
@@ -260,6 +267,9 @@ python scripts/makePlot.py --hist HiggsTemplateCrossSections_pT_V.json -c config
 ```
 
 where the arguments to `--draw` are of the format `PAR1=X1,PAR2=X2,..:COLOR`. This example gives the output:
+
+
+![pT_V](/resources/docs/HiggsTemplateCrossSections_pT_V.png)
 
 ## Known limitations
 
