@@ -30,7 +30,7 @@ for i in xrange(args.initial_seed, args.initial_seed + args.jobs):
         for X in args.env.split(','):
             cmd.append('export %s' % X)
 
-    cmd.append('bash %s/run_gridpack.sh %s %i %i %s' % (iwd, gp_full, args.events, i, args.plugins))
+    cmd.append('bash %s/scripts/run_gridpack.sh %s %i %i %s' % (iwd, gp_full, args.events, i, args.plugins))
     cmd.append('cp Rivet_%i.yoda %s/Rivet_%i.yoda' % (i, outdir, i))
     cmd.append('rm Rivet_%i.yoda' % i)
     job_mgr.job_queue.append('; '.join(cmd))

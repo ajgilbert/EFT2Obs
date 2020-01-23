@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
-# source env.sh
+source env.sh
 
-set -x
 set -e
 
 
