@@ -90,7 +90,13 @@ Notes on the `param_card.dat` format:
  - A restriction on the number of new physics vertices to be less than one should be applied. In many models this is achieved with adding `NP<=1` at the end of each process, but check the model-specific documentation for guidance. See the **Known limitations** section below for more details.
  - The argument to the `output` command at the end must match the `cards` sub-directory name.
 
-Run the `setup_process.sh` script to initialise this process in Madgraph, which creates the directory `MG5_aMC_v2_6_7/zh-HEL`.
+To initialise this process in Madgraph run
+
+```sh
+./scripts/setup_process.sh zh-HEL
+```
+
+which creates the directory `MG5_aMC_v2_6_7/zh-HEL`.
 
 ### Prepare Madgraph cards
 
@@ -177,7 +183,9 @@ Now everything is set up we can proceed to the event generation. This is handled
 
 ```sh
 mkdir test-zh # to store the yoda output files
-python launch_jobs.py --gridpack gridpack_zh-HEL.tar.gz -j 4 -s 1 -e 500 -p HiggsTemplateCrossSectionsStage1,HiggsTemplateCrossSections -o test-zh --job-mode interactive --parallel 4 --env HIGGSPRODMODE=ZH
+python scripts/launch_jobs.py --gridpack gridpack_zh-HEL.tar.gz -j 4 -s 1 -e 500 \
+  -p HiggsTemplateCrossSectionsStage1,HiggsTemplateCrossSections \
+  -o test-zh --job-mode interactive --parallel 4 --env HIGGSPRODMODE=ZH
 ```
 
 where the options are:
@@ -268,7 +276,7 @@ The output in `json` format is intended for further processing. It contains info
 A script is available for plotting the histogram overlaying the expectation for arbitrary values of the parameters. For this ROOT (and the PyROOT interface) must be available. The script relies only on the json output file from the above step, for example:
 
 ```sh
-python scripts/makePlot.py --hist HiggsTemplateCrossSections_pT_V.json -c config_HEL_STXS_test.json --x-title "p_{T}(Z) [GeV]" --title-left "qq #rightarrow Hl^{+}l^{-}" --title-right "HEL UFO" --ratio 0.9,1.95 --draw chw=0.005:4 cww=0.005:2 cb=0.005:8 ca=0.05:12 --show-unc --y-min 1E-9 --translate resources/translate_root.json
+python scripts/makePlot.py --hist HiggsTemplateCrossSections_pT_V.json -c config_HEL_STXS.json --x-title "p_{T}(Z) [GeV]" --title-left "qq #rightarrow Hl^{+}l^{-}" --title-right "HEL UFO" --ratio 0.9,1.95 --draw chw=0.005:4 cww=0.005:2 cb=0.005:8 ca=0.05:12 --show-unc --y-min 1E-9 --translate resources/translate_root.json
 ```
 
 where the arguments to `--draw` are of the format `PAR1=X1,PAR2=X2,..:COLOR`. This example gives the output:
