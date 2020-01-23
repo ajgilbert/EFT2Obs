@@ -8,7 +8,7 @@ The assumption is that the cross section for a bin i can be expressed as the sum
 
 ![cross section equation](/resources/docs/sigma_eqn.png)
 
-where  σ_int is the leading term in the EFT expansion (going as 1/Λ^2), and accounts for the interference with the SM amplitude. The SM-independent term is labelled as σ_BSM (going as 1/Λ4).
+where  σ_int is the leading term in the EFT expansion (going as 1/Λ^2), and accounts for the interference with the SM amplitude. The SM-independent term is labelled as σ_BSM (going as 1/Λ^4).
 
 Dividing through by the SM cross section, σ_SM, provides a scaling function for each bin
 
@@ -20,7 +20,7 @@ Note that this workflow has only been tested on lxplus so far, and for CMS users
 
 ## Initial setup
 
-These steps need only be performed once to set up and install the relevant software packages.
+Follow these steps to set up and install the relevant software packages.
 
 Clone the EFT2Obs repository and source the `env.sh` script which sets a number of useful environment variables:
 
@@ -29,6 +29,9 @@ git clone https://github.com/ajgilbert/EFT2Obs.git
 cd EFT2Obs
 source env.sh
 ```
+
+The `env.sh` script should be sourced at the start of each new session.
+
 **At the moment LHAPDF is not installed automatically. Please edit `env.sh` first to change the path for `lhapdf-config` if you do not have /cvmfs mounted.**
 
 Then run the following scripts to download and install Madgraph_aMC@NLO, Pythia and Rivet. Note this may take some time to complete.
@@ -66,7 +69,7 @@ In this section for clarity we will follow a specific example, ZH production in 
 
 ### Setup process
 
-Each process+model combination we want to study first needs a dedicated sub-directory in  `EFT2Obs/cards`. In this case we will use the pre-existing one for `zh-HEL`. Here we add a `proc_card.dat` specifying the model to import and the LO process we wish to generate:
+Each process+model combination we want to study first needs a dedicated sub-directory in `EFT2Obs/cards`. In this case we will use the pre-existing one for `zh-HEL`. Here we add a `proc_card.dat` specifying the model to import and the LO process we wish to generate:
 
 ```
 import model HEL_UFO
@@ -87,11 +90,11 @@ Notes on the `param_card.dat` format:
  - A restriction on the number of new physics vertices to be less than one should be applied. In many models this is achieved with adding `NP<=1` at the end of each process, but check the model-specific documentation for guidance. See the **Known limitations** section below for more details.
  - The argument to the `output` command at the end must match the `cards` sub-directory name.
 
-Run the `setup_process.sh` script to initialise this process in Madgraph, which creates the directory `MG5_aMC_v2_6_6/zh-HEL`.
+Run the `setup_process.sh` script to initialise this process in Madgraph, which creates the directory `MG5_aMC_v2_6_7/zh-HEL`.
 
 ### Prepare Madgraph cards
 
-There are four further configuration cards that we need to specify: the `run_card.dat`, `pythia8_card.dat`, `param_card.dat` and `reweight_card.dat`. For the two  of these we can start from the default cards Madgraph created in the `MG5_aMC_v2_6_6/zh-HEL/Cards` directory. If these files do not already exist in our `cards/zh-HEL` directory then they will have been copied there in the `setup_process.sh` step above. If necessary edit these cards to set the desired values for the generation or showering parameters. In this example the cards have already been configured in the repository.
+There are four further configuration cards that we need to specify: the `run_card.dat`, `pythia8_card.dat`, `param_card.dat` and `reweight_card.dat`. For the first two we can start from the default cards Madgraph created in the `MG5_aMC_v2_6_7/zh-HEL/Cards` directory. If these files do not already exist in our `cards/zh-HEL` directory then they will have been copied there in the `setup_process.sh` step above. If necessary edit these cards to set the desired values for the generation or showering parameters. In this example the cards have already been configured in the repository.
 
 #### Config file
 
@@ -111,7 +114,7 @@ where:
   - `--def-sm` is the default value of the parameters that corresponds to the SM expectation
   - `--def-gen` the default parameter value used to generate the events
 
-The `--pars` option supports multiple arguments of the form `[BLOCK]:[ID1],[ID2],...[IDN]`. The block name and numbers correspond to those in the `param_card.dat` that Madgraph produces in the `MG5_aMC_v2_6_6/zh-HEL/Cards` directory. The resulting file looks like:
+The `--pars` option supports multiple arguments of the form `[BLOCK]:[ID1],[ID2],...[IDN]`. The block name and numbers correspond to those in the `param_card.dat` that Madgraph produces in the `MG5_aMC_v2_6_7/zh-HEL/Cards` directory. The resulting file looks like:
 
 ```json
 {
@@ -148,7 +151,7 @@ Next we make the `param_card.dat` that will be used for the initial event genera
 python scripts/make_param_card.py -p zh-HEL -c config_HEL_STXS.json -o cards/zh-HEL/param_card.dat
 ```
 
-The script take the default card in `MG5_aMC_v2_6_6/zh-HEL/Cards` and will report which parameter values are changed.
+The script take the default card in `MG5_aMC_v2_6_7/zh-HEL/Cards` and will report which parameter values are changed.
 
 #### reweight_card.dat
 
@@ -170,10 +173,10 @@ Once complete the gridpack `gridpack_zh-HEL.tar.gz` will be copied to the main d
 
 ### Event generation step
 
-Now everything is set up we can proceed to the event generation. This is handled by `scripts/launch_jobs.py`. This can run a set of jobs in parallel, each with different RNG seed so that the events are statistically independent. The script runs through the LHE file generation with Madgraph, the EFT model reweighting, showering with Pythia and finally processing with Rivet. The output of each job is a yoda file containing all the Rivet routine histograms. We exploit the feature that in Rivet 3.X a copy of each histogram is saved for every weighting point. The following command runs 4 jobs each with 500 events in parallel:
+Now everything is set up we can proceed to the event generation. This is handled by `scripts/launch_jobs.py`. This can run a set of jobs in parallel, each with a different RNG seed so that the events are statistically independent. The script runs through the LHE file generation with Madgraph, the EFT model reweighting, showering with Pythia and finally processing with Rivet. The output of each job is a yoda file containing all the Rivet routine histograms. We exploit the feature that in Rivet 3.X a copy of each histogram is saved for every weight. The following command runs 4 jobs each with 500 events in parallel:
 
 ```sh
-mkdir test-zh
+mkdir test-zh # to store the yoda output files
 python launch_jobs.py --gridpack gridpack_zh-HEL.tar.gz -j 4 -s 1 -e 500 -p HiggsTemplateCrossSectionsStage1,HiggsTemplateCrossSections -o test-zh --job-mode interactive --parallel 4 --env HIGGSPRODMODE=ZH
 ```
 
@@ -190,7 +193,9 @@ where the options are:
 
 To submit jobs to htcondor at CERN the `--job-mode interactive --parallel 4` options can be replaced by `--job-mode condor --task-name stxs --sub-opts '+JobFlavour = "longlunch"'`. Anything specified in `--sub-opts` will be added to the condor submit file.
 
-Note that during the workflow the event weights that are added by Madgraph are transformed before they are utilised by Rivet. This is done to isolate the different terms that will appear in the final parametrisation, allowing to more easily keep track of their statistical uncertainties. The table below illustrates the weight transformation for a simple example with two model parameters, c_1 and c_2. For each weighting point, labelled W_i, the expression for the default and transformed weights are given as a function of the D_1 and D_2 constants, which take the values specified in the config file above.
+Note that during the workflow the event weights that are added by Madgraph are transformed before they are utilised by Rivet. This is done to isolate the separate terms that will appear in the final parametrization, and to more easily keep track of their statistical uncertainties. The table below illustrates the weight transformation for a simple example with two model parameters, c_1 and c_2. For each weighting point, labelled W_i, the expression for the default and transformed weights are given as a function of the D_1 and D_2 constants, which take the values specified in the config file.
+
+![weight_table](/resources/docs/weight_table.png)
 
 ### Extract scaling functions
 
