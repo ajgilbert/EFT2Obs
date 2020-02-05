@@ -32,16 +32,14 @@ source env.sh
 
 The `env.sh` script should be sourced at the start of each new session.
 
-**At the moment LHAPDF is not installed automatically. Please edit `env.sh` first to change the path for `lhapdf-config` if you do not have /cvmfs mounted.**
-
-Then run the following scripts to download and install Madgraph_aMC@NLO, Pythia and Rivet. Note this may take some time to complete.
+Then run the following scripts to download and install LHAPDF, Madgraph_aMC@NLO, Pythia and Rivet. Note this may take some time to complete.
 
 ```sh
 ./scripts/setup_mg5.sh
 ./scripts/setup_rivet.sh
 ```
 
-The first script applies patches to the Madgraph-Pythia interface that are needed to make valid HepMC output with stored event weights and to perform a transformation of these weights that is described in more detail below.
+The first script installs LHAPDF and Magraph, then applies patches to the Madgraph-Pythia interface that are needed to make valid HepMC output with stored event weights and to perform a transformation of these weights that is described in more detail below.
 
 ## Setup models
 
@@ -51,6 +49,9 @@ The Madgraph-compatible models you wish to study should be installed next. Scrip
 ./scripts/setup_model_HEL.sh
 ./scripts/setup_model_SMEFTsim.sh
 ```
+
+*Note: a patch is provided for the HEL model that will fix the mass of the Z boson, otherwise by default this will vary as a function of the EFT parameters: `patch MG5_aMC_v2_6_7/models/HEL_UFO/parameters.py setup/HEL_fix_MZ__parameters.py.patch`*
+
 ## Setup Rivet routines
 
 The Rivet routines which define the fiducial regions and obserbables of interest should be placed in the `EFT2Obs/RivetPlugins` directory. Two routines for the Higgs STXS are already provided: `HiggsTemplateCrossSectionsStage1` and `HiggsTemplateCrossSections`  which contain the stage 1 and 1.1 definitions respectively. Whenever new routines are added or existing ones modified they should be recompiled with:
@@ -100,7 +101,7 @@ which creates the directory `MG5_aMC_v2_6_7/zh-HEL`.
 
 ### Prepare Madgraph cards
 
-There are four further configuration cards that we need to specify: the `run_card.dat`, `pythia8_card.dat`, `param_card.dat` and `reweight_card.dat`. For the first two we can start from the default cards Madgraph created in the `MG5_aMC_v2_6_7/zh-HEL/Cards` directory. If these files do not already exist in our `cards/zh-HEL` directory then they will have been copied there in the `setup_process.sh` step above. If necessary edit these cards to set the desired values for the generation or showering parameters. In this example the cards have already been configured in the repository.
+There are four further configuration cards that we need to specify: the `run_card.dat`, `pythia8_card.dat`, `param_card.dat` and `reweight_card.dat`. For the first two we can start from the default cards Madgraph created in the `MG5_aMC_v2_6_7/zh-HEL/Cards` directory. If these files do not already exist in our `cards/zh-HEL` directory then they will have been copied there in the `setup_process.sh` step above. If necessary edit these cards to set the desired values for the generation or showering parameters. In this example the cards have already been configured in the repository. *Note for CMS users: to emulate the Pythia configuration in official CMS sample production the lines in `resources/pythia8/cms_default_2018.dat` can be added to the `pythia8_card.cat`*.
 
 #### Config file
 
@@ -172,32 +173,53 @@ python scripts/make_reweight_card.py config_HEL_STXS.json cards/zh-HEL/reweight_
 To make the event generation more efficient and easier to run in parallel we first produce a gridpack for the process:
 
 ```sh
- ./scripts/make_gridpack.sh zh-HEL
+./scripts/make_gridpack.sh zh-HEL
 ```
 
 Once complete the gridpack `gridpack_zh-HEL.tar.gz` will be copied to the main directory.
 
 ### Event generation step
 
-Now everything is set up we can proceed to the event generation. This is handled by `scripts/launch_jobs.py`. This can run a set of jobs in parallel, each with a different RNG seed so that the events are statistically independent. The script runs through the LHE file generation with Madgraph, the EFT model reweighting, showering with Pythia and finally processing with Rivet. The output of each job is a yoda file containing all the Rivet routine histograms. We exploit the feature that in Rivet 3.X a copy of each histogram is saved for every weight. The following command runs 4 jobs each with 500 events in parallel:
+Now everything is set up we can proceed to the event generation.
+
+This is handled by `scripts/run_gridpack.py`, which runs through the LHE file generation with Madgraph, the EFT model reweighting, showering with Pythia and finally processing with Rivet. The output is a yoda file containing all the Rivet routine histograms. We exploit the feature that in Rivet 3.X a copy of each histogram is saved for every weight. The following command generates 500 events:
 
 ```sh
-mkdir test-zh # to store the yoda output files
+export HIGGSPRODMODE=ZH
+python scripts/run_gridpack.py --gridpack gridpack_zh-HEL.tar.gz -s 1 -e 500 \
+  -p HiggsTemplateCrossSectionsStage1,HiggsTemplateCrossSections \
+  -o test-zh
+```
+
+where the full set of options is:
+
+ - `--gridpack [file]` relative or absolute path to the gridpack
+ - `-s X` the RNG seed which will be passed to Madgraph. This is also used to index the output files from the job, e.g. `Rivet_[X].yoda`.
+ - `-e N` number of events per job, in this case 500.
+ - `-p [RivetRoutine1],[RivetRoutine2],...` comma separated list of Rivet routines to run
+ - `-o [dir]` the output directory for the yoda files, will be created if it does not exist
+ - `--save-lhe [path]` save the intermediate LHE files (containing the event weights) to the relative or absolute directory given by `[path]`. The output file will be of the form `[path]/events_[X].lhe.gz` where `[X]` is the RNG seed.
+ - `--save-hepmc [path]` save the intermediate HepMC files to the relative or absolute directory given by `[path]`. The output file will be of the form `[path]/events_[X].hepmc.gz` where `[X]` is the RNG seed.
+ - `--load-lhe [path]` load the existing LHE file from the relative or absolute directory given by `[path]`. The input file must be of the form `[path]/events_[X].lhe.gz` where `[X]` is the RNG seed. All prior steps are skipped.
+ - `--load-hepmc [path]` load the existing HepMC file from the relative or absolute directory given by `[path]`. The input file must be of the form `[path]/events_[X].hepmc.gz` where `[X]` is the RNG seed. All prior steps are skipped. Note that it does not make sense to set both `--load-lhe` and `--load-hepmc`.
+ - `--rivet-ignore-beams` sets the `--ignore-beams` option when running Rivet, useful for cases where only a particle decay is simulated, instead of a full collision.
+ - `--no-cleanup` prevents the local working directory (named `gridpack_run_[X]`) from being deleted at the end, can be useful for debugging.
+
+Since it is usually not feasible to generate the desired number of events in a single job, a wrapper script `scripts/launch_jobs.py` is provided which can automate running a set of jobs in parallel, each with a different RNG seed so that the events are statistically independent. This script passes through all command line options to `run_gridpack.py`, but adds several extra options to control how the jobs run:
+
+ - `-j N` the number of jobs to run
+ - `-s X` the initial RNG seed for the first job. Subsequent jobs i use `X + i` as the seed.
+ - `--job-mode` supported options are interactive or submission to batch farms, e.g. condor
+ - `--parallel X` number of parallel jobs to run in interactive mode
+ - `--env X1=Y1,X2=Y2,..` any environment variables that should be set in the job. In this example the STXS Rivet routines require the Higgs production mode to be specified.
+
+The following command runs four jobs, each generating 500 events:
+
+```sh
 python scripts/launch_jobs.py --gridpack gridpack_zh-HEL.tar.gz -j 4 -s 1 -e 500 \
   -p HiggsTemplateCrossSectionsStage1,HiggsTemplateCrossSections \
   -o test-zh --job-mode interactive --parallel 4 --env HIGGSPRODMODE=ZH
 ```
-
-where the options are:
-
- - `-j N` the number of jobs to run
- - `-s X` the initial RNG seed for the first job. Subsequent jobs i use `X + i` as the seed.
- - `-e N` number of events per job
- - `-p [RivetRoutine1],[RivetRoutine2],...` comma separated list of Rivet routines to run
- - `-o [dir]` the output directory for the yoda files
- - `--job-mode` supported options are interactive or submission to batch farms, e.g. condor
- - `--parallel X` number of parallel jobs to run in interactive mode
- - `--env X1=Y1,X2=Y2,..` any environment variables that should be set in the job. In this example the STXS Rivet routines require the Higgs production mode to be specified.
 
 To submit jobs to htcondor at CERN the `--job-mode interactive --parallel 4` options can be replaced by `--job-mode condor --task-name stxs --sub-opts '+JobFlavour = "longlunch"'`. Anything specified in `--sub-opts` will be added to the condor submit file.
 
@@ -290,7 +312,6 @@ The following limitations currently apply. Links to GitHub issues indicate which
 
  - Processes are limited to one new-physics vertex (i.e. `NP <= 1` syntax required in the process definition). This is often acceptable when production and decay can be factorised, for example in the Higgs STXS, but is not a restriction we want to have in general.
  - NLO processes, and therefore models designed to operate on NLO processes are not supported. Conceptually there is not much difference to running on LO, however the technical side of the gridpack production and reweighting has to be tailored for NLO.
- - LHE and/or HepMC output is not saved. Currently the whole workflow from LHE generation through to running RIVET takes place in one go. In future it will be possible to run only specific parts of the workflow, saving the output from each step, or reading it back in, as needed.
  - Some incompatibilities with the CMSSW environment have been reported. For now this should not be set when running EFT2Obs.
  - In future it will be possible to use a gridpack produced elsewhere as input to the event generation step. EFT2Obs will modify the gridpack to include reweighting with the model specified, which need not have been used when setting up the original process.
 
