@@ -19,8 +19,8 @@ parser.add_argument('--no-cleanup', action='store_true', help="Do not delete wor
 
 args = parser.parse_args()
 
-if args.load_hepmc is not None and args.load_lhe is not None:
-    raise RuntimeError('Cannot set --load-hepmc and --load-lhe at the same time')
+if args.load_hepmc is not None and (args.load_lhe is not None or args.save_lhe is not None):
+    raise RuntimeError('Cannot set --load-hepmc and --load-lhe/--save-lhe at the same time')
 
 
 def ResolvePath(pathname, relbase):
@@ -84,31 +84,30 @@ else:
 if os.path.isdir(gridpack_dir):
     subprocess.check_call(['rm', '-r', gridpack_dir])
 
-os.mkdir(gridpack_dir)
-
-print '>> Untarring gridpack %s into %s' % (gridpack, gridpack_dir)
-subprocess.check_call(['tar', '-xf', gridpack, '-C', '%s/' % gridpack_dir])
-
-os.chdir(gridpack_dir)
-gp_dir = os.getcwd()
-
-subprocess.check_call(['mkdir', '-p', 'madevent/Events/GridRun'])
-
-if load_lhe is None and load_hepmc is None:
-    subprocess.check_call(['./run.sh', '%i' % events, '%i' % seed])
-    subprocess.check_call(['mv', 'events.lhe.gz', 'madevent/Events/GridRun/unweighted_events.lhe.gz'])
-    os.chdir('madevent')
-    subprocess.check_call('echo "0" | ./bin/madevent --debug reweight GridRun', shell=True)
-    os.chdir(gp_dir)
-elif load_lhe is not None and load_hepmc is None:
-    subprocess.check_call(['cp', '%s/events_%i.lhe.gz' % (load_lhe, seed), 'madevent/Events/GridRun/unweighted_events.lhe.gz'])
-
-if save_lhe is not None:
-    subprocess.check_call(['mkdir', '-p', save_lhe])
-    subprocess.check_call(['cp', 'madevent/Events/GridRun/unweighted_events.lhe.gz', '%s/events_%i.lhe.gz' % (save_lhe, seed)])
-
-
+# Can skip untarring the gridpack if we're going to read straight from existing hepMC
 if load_hepmc is None:
+    os.mkdir(gridpack_dir)
+    print '>> Untarring gridpack %s into %s' % (gridpack, gridpack_dir)
+    subprocess.check_call(['tar', '-xf', gridpack, '-C', '%s/' % gridpack_dir])
+
+    os.chdir(gridpack_dir)
+    gp_dir = os.getcwd()
+
+    subprocess.check_call(['mkdir', '-p', 'madevent/Events/GridRun'])
+
+    if load_lhe is None:
+        subprocess.check_call(['./run.sh', '%i' % events, '%i' % seed])
+        subprocess.check_call(['mv', 'events.lhe.gz', 'madevent/Events/GridRun/unweighted_events.lhe.gz'])
+        os.chdir('madevent')
+        subprocess.check_call('echo "0" | ./bin/madevent --debug reweight GridRun', shell=True)
+        os.chdir(gp_dir)
+    else:
+        subprocess.check_call(['cp', '%s/events_%i.lhe.gz' % (load_lhe, seed), 'madevent/Events/GridRun/unweighted_events.lhe.gz'])
+
+    if save_lhe is not None:
+        subprocess.check_call(['mkdir', '-p', save_lhe])
+        subprocess.check_call(['cp', 'madevent/Events/GridRun/unweighted_events.lhe.gz', '%s/events_%i.lhe.gz' % (save_lhe, seed)])
+
     os.chdir('madevent')
     lines = ['pythia8']
     if save_hepmc is None:
@@ -123,13 +122,11 @@ else:
     subprocess.check_call(['gunzip', '%s/events_%i.hepmc.gz' % (tmpdir, seed)])
 
 
-os.chdir(gp_dir)
+os.chdir(iwd)
 rivet_args = ['rivet', '--analysis=%s' % plugins, '%s/events_%i.hepmc' % (tmpdir, seed), '-o', '%s/Rivet_%i.yoda' % (outdir, seed)]
 if ignore_beams:
     rivet_args.append('--ignore-beams')
 subprocess.check_call(rivet_args)
-
-os.chdir(iwd)
 
 if save_hepmc is not None:
     subprocess.check_call(['mkdir', '-p', save_hepmc])
@@ -139,5 +136,5 @@ if save_hepmc is not None:
 else:
     os.remove('%s/events_%i.hepmc' % (tmpdir, seed))
 
-if not args.no_cleanup:
+if not args.no_cleanup and load_hepmc is None:
     subprocess.check_call(['rm', '-r', gridpack_dir])

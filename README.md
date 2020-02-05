@@ -32,16 +32,14 @@ source env.sh
 
 The `env.sh` script should be sourced at the start of each new session.
 
-**At the moment LHAPDF is not installed automatically. Please edit `env.sh` first to change the path for `lhapdf-config` if you do not have /cvmfs mounted.**
-
-Then run the following scripts to download and install Madgraph_aMC@NLO, Pythia and Rivet. Note this may take some time to complete.
+Then run the following scripts to download and install LHAPDF, Madgraph_aMC@NLO, Pythia and Rivet. Note this may take some time to complete.
 
 ```sh
 ./scripts/setup_mg5.sh
 ./scripts/setup_rivet.sh
 ```
 
-The first script applies patches to the Madgraph-Pythia interface that are needed to make valid HepMC output with stored event weights and to perform a transformation of these weights that is described in more detail below.
+The first script installs LHAPDF and Magraph, then applies patches to the Madgraph-Pythia interface that are needed to make valid HepMC output with stored event weights and to perform a transformation of these weights that is described in more detail below.
 
 ## Setup models
 
@@ -51,6 +49,9 @@ The Madgraph-compatible models you wish to study should be installed next. Scrip
 ./scripts/setup_model_HEL.sh
 ./scripts/setup_model_SMEFTsim.sh
 ```
+
+*Note: a patch is provided for the HEL model that will fix the mass of the Z boson, otherwise by default this will vary as a function of the EFT parameters: `patch MG5_aMC_v2_6_7/models/HEL_UFO/parameters.py setup/HEL_fix_MZ__parameters.py.patch`*
+
 ## Setup Rivet routines
 
 The Rivet routines which define the fiducial regions and obserbables of interest should be placed in the `EFT2Obs/RivetPlugins` directory. Two routines for the Higgs STXS are already provided: `HiggsTemplateCrossSectionsStage1` and `HiggsTemplateCrossSections`  which contain the stage 1 and 1.1 definitions respectively. Whenever new routines are added or existing ones modified they should be recompiled with:
@@ -172,7 +173,7 @@ python scripts/make_reweight_card.py config_HEL_STXS.json cards/zh-HEL/reweight_
 To make the event generation more efficient and easier to run in parallel we first produce a gridpack for the process:
 
 ```sh
- ./scripts/make_gridpack.sh zh-HEL
+./scripts/make_gridpack.sh zh-HEL
 ```
 
 Once complete the gridpack `gridpack_zh-HEL.tar.gz` will be copied to the main directory.

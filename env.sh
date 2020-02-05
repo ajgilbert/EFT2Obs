@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-export LHAPDF_CONFIG_PATH="/cvmfs/cms.cern.ch/slc7_amd64_gcc630/external/lhapdf/6.2.1-ghjeda/bin/lhapdf-config"
+export LHAPDF_CONFIG_PATH="${PWD}/lhapdf/bin/lhapdf-config"
+export PYTHONPATH="${PWD}/lhapdf/lib64/python2.7/site-packages:${PYTHONPATH}"
+export LD_LIBRARY_PATH="${PWD}/lhapdf/lib:${LD_LIBRARY_PATH}"
 export RIVET_ANALYSIS_PATH=${PWD}/RivetPlugins
 export MG_DIR="MG5_aMC_v2_6_7"
 export MG_TARBALL="MG5_aMC_v2.6.7.tar.gz"
