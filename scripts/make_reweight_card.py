@@ -22,7 +22,7 @@ for p in pars:
             p[k] = defs[k]
 # print pars
 
-output = []
+output = ['change rwgt_dir rwgt']
 
 initvals = [X['sm'] for X in pars]
 

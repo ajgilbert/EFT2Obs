@@ -30,27 +30,29 @@ pushd ${MG_DIR}/${PROCESS}
 if [ -d "${MG_DIR}/${PROCESS}/Events/${RUNLABEL}" ]; then rm -r ${MG_DIR}/${PROCESS}/Events/${RUNLABEL}; fi
 ./bin/generate_events ${RUNLABEL} -n < mgrunscript
 
-cp "${RUNLABEL}_gridpack.tar.gz" "${IWD}/gridpack_${PROCESS}.tar.gz"
+mkdir "gridpack_${PROCESS}"
 
+pushd "gridpack_${PROCESS}"
+	tar -xf ../${RUNLABEL}_gridpack.tar.gz
+	mkdir -p madevent/Events/${RUNLABEL}
+	cp ../Events/${RUNLABEL}/unweighted_events.lhe.gz madevent/Events/${RUNLABEL}
+	pushd madevent
+		cp Cards/.reweight_card.dat Cards/reweight_card.dat.backup
+		{
+			echo "change rwgt_dir rwgt"
+			echo "launch"
+		} > Cards/reweight_card.dat
+		echo "0" | ./bin/madevent --debug reweight pilotrun
+		cp Cards/reweight_card.dat.backup Cards/reweight_card.dat
+	popd
+	rm -r madevent/Events/${RUNLABEL}
+	tar -zcf "../gridpack_${PROCESS}.tar.gz" ./*
+popd
 
-# The part below initialises the reweighting in the new gridpack,
-# but it doesn't seem to be necessary.
+rm -r "gridpack_${PROCESS}"
+cp "gridpack_${PROCESS}.tar.gz" "${IWD}/gridpack_${PROCESS}.tar.gz"
 
-# mkdir "gridpack_${PROCESS}"
-
-# pushd "gridpack_${PROCESS}"
-# 	tar -xf ../${RUNLABEL}_gridpack.tar.gz
-# 	mkdir -p madevent/Events/${RUNLABEL}
-# 	cp ../Events/${RUNLABEL}/unweighted_events.lhe.gz madevent/Events/${RUNLABEL}
-# 	# Do we really need to do this??
-# 	# pushd madevent
-# 	# 	echo "0" | ./bin/madevent --debug reweight pilotrun
-# 	# popd
-# 	rm -r madevent/Events/${RUNLABEL}
-# 	tar -zcf "../gridpack_${PROCESS}.tar.gz" ./*
-# popd
-
-# rm -r "gridpack_${PROCESS}"
-# popd
+# cp "${RUNLABEL}_gridpack.tar.gz" "${IWD}/gridpack_${PROCESS}.tar.gz"
+popd
 
 echo ">> Gridpack ${IWD}/gridpack_${PROCESS}.tar.gz has been successfully created"
