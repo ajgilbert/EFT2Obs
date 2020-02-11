@@ -4,11 +4,12 @@ source env.sh
 set -e
 
 if [[ $# -lt 1 ]]; then
-    echo "Insufficient number of arguments, usage is ./run_gridpack.sh [name]]"
+    echo "Insufficient number of arguments, usage is ./run_gridpack.sh name [export = 0 or 1]"
     exit 1
 fi
 
 PROCESS=$1
+EXPORTRW=${2-0}
 IWD=${PWD}
 
 ### SET ENVIRONMENT VARIABLES HERE
@@ -44,6 +45,11 @@ pushd "gridpack_${PROCESS}"
 		} > Cards/reweight_card.dat
 		echo "0" | ./bin/madevent --debug reweight pilotrun
 		cp Cards/reweight_card.dat.backup Cards/reweight_card.dat
+		if [ "$EXPORTRW" -eq "1" ]; then
+			tar -zcf "rw_module_${PROCESS}.tar.gz" rwgt
+			cp "rw_module_${PROCESS}.tar.gz" "${IWD}/"
+			echo ">> Reweighting module ${IWD}/rw_module_${PROCESS}.tar.gz has been successfully created"
+		fi
 	popd
 	rm -r madevent/Events/${RUNLABEL}
 	tar -zcf "../gridpack_${PROCESS}.tar.gz" ./*
