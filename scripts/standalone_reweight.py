@@ -22,13 +22,13 @@ def GetConfigFile(filename):
 
 class StandaloneReweight:
 
-    def __init__(self, config, module, cards_dir):
-        self.cfg = GetConfigFile(config)
-        self.module = module
-        self.cards = cards_dir
+    def __init__(self, rw_pack):
+        self.target_dir = os.path.abspath(rw_pack)
+        self.cfg = GetConfigFile(os.path.join(self.target_dir, 'config.json'))
+        # self.module = module
+        # self.cards = cards_dir
         self.Npars = len(self.cfg['parameters'])
         self.N = 1 + self.Npars * 2 + (self.Npars * self.Npars - self.Npars) / 2
-        self.target_dir = 'rwgt_standalone'
 
         print '>> %i parameters, %i reweight points' % (self.Npars, self.N)
         self.InitModules()
@@ -63,13 +63,9 @@ class StandaloneReweight:
     def InitModules(self):
         iwd = os.getcwd()
 
-        subproc_dir = '%s/%s/rwgt/rw_me/SubProcesses' % (iwd, self.target_dir)
+        subproc_dir = os.path.join(self.target_dir, 'rwgt/rw_me/SubProcesses')
 
-        if not os.path.isdir(self.target_dir):
-            os.mkdir(self.target_dir)
-            print '>> Untarring module %s into %s' % (self.module, self.target_dir)
-            subprocess.check_call(['tar', '-xf', self.module, '-C', '%s/' % self.target_dir])
-
+        if not os.path.isdir(os.path.join(subproc_dir, 'rwdir_0')):
             os.chdir(subproc_dir)
             for i in xrange(self.N):
                 os.mkdir('rwdir_%i' % i)
@@ -88,7 +84,7 @@ class StandaloneReweight:
             # print imp.find_module('allmatrix2py')
             self.mods.append(imp.load_module('allmatrix2py', *imp.find_module('allmatrix2py')))
             del sys.modules['allmatrix2py']
-            self.mods[-1].initialise('%s/%s/param_card_%i.dat' % (iwd, self.cards, i))
+            self.mods[-1].initialise('%s/param_card_%i.dat' % (self.target_dir, i))
 
         os.chdir(iwd)
 
