@@ -176,7 +176,13 @@ To make the event generation more efficient and easier to run in parallel we fir
 ./scripts/make_gridpack.sh zh-HEL
 ```
 
-Once complete the gridpack `gridpack_zh-HEL.tar.gz` will be copied to the main directory.
+Once complete the gridpack `gridpack_zh-HEL.tar.gz` will be copied to the main directory. The script can also produce a standalone version of the matrix-element code. This can be useful for reweighting events outside of the EFT2Obs tool. To produce this, add an additional flag:
+
+```sh
+./scripts/make_gridpack.sh zh-HEL 1
+```
+
+An addtional file, `rw_module_zh-HEL.tar.gz` is also produced. See the section below on standalone reweighting for more information.
 
 ### Event generation step
 
@@ -204,6 +210,7 @@ where the full set of options is:
  - `--load-hepmc [path]` load the existing HepMC file from the relative or absolute directory given by `[path]`. The input file must be of the form `[path]/events_[X].hepmc.gz` where `[X]` is the RNG seed. All prior steps are skipped. Note that it does not make sense to set both `--load-lhe` and `--load-hepmc`.
  - `--rivet-ignore-beams` sets the `--ignore-beams` option when running Rivet, useful for cases where only a particle decay is simulated, instead of a full collision.
  - `--no-cleanup` prevents the local working directory (named `gridpack_run_[X]`) from being deleted at the end, can be useful for debugging.
+ - `--to-step [lhe,shower,rivet]` stop after the given step, no further processing is performed. Useful if, for example, you only want to generate the LHE files and not run the rivet routine.
 
 Since it is usually not feasible to generate the desired number of events in a single job, a wrapper script `scripts/launch_jobs.py` is provided which can automate running a set of jobs in parallel, each with a different RNG seed so that the events are statistically independent. This script passes through all command line options to `run_gridpack.py`, but adds several extra options to control how the jobs run:
 

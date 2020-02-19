@@ -16,6 +16,7 @@ parser.add_argument('--save-hepmc', type=str, default=None, help="Local director
 parser.add_argument('--load-hepmc', type=str, default=None, help="Load hepmc file from this local directory, skip running MG")
 parser.add_argument('--rivet-ignore-beams', action='store_true', help="Pass the --ignore-beams argument when running rivet, useful for simulating decay-only processes")
 parser.add_argument('--no-cleanup', action='store_true', help="Do not delete working directory at the end")
+parser.add_argument('--to-step', default='rivet', choices=['lhe', 'shower', 'rivet'], help="Terminate after this step")
 
 args = parser.parse_args()
 
@@ -34,7 +35,6 @@ def MaybeMakeDir(pathname):
     if not os.path.isdir(pathname) and not os.path.isfile(pathname):
         print '>> Creating directory %s' % pathname
         subprocess.check_call(['mkdir', '-p', pathname])
-
 
 
 # Path we're running from
@@ -84,6 +84,8 @@ else:
 if os.path.isdir(gridpack_dir):
     subprocess.check_call(['rm', '-r', gridpack_dir])
 
+finished = False
+
 # Can skip untarring the gridpack if we're going to read straight from existing hepMC
 if load_hepmc is None:
     os.mkdir(gridpack_dir)
@@ -108,25 +110,31 @@ if load_hepmc is None:
         subprocess.check_call(['mkdir', '-p', save_lhe])
         subprocess.check_call(['cp', 'madevent/Events/GridRun/unweighted_events.lhe.gz', '%s/events_%i.lhe.gz' % (save_lhe, seed)])
 
-    os.chdir('madevent')
-    lines = ['pythia8']
-    if save_hepmc is None:
-        lines.append('set HEPMCoutput:file fifo@%s/events_%i.hepmc' % (tmpdir, seed))
-    else:
-        lines.append('set HEPMCoutput:file %s/events_%i.hepmc' % (tmpdir, seed))
-    with open('mgrunscript', "w") as text_file:
-        text_file.write('\n'.join(lines))
-    subprocess.check_call('./bin/madevent --debug shower GridRun < mgrunscript', shell=True)
+    if args.to_step == 'lhe':
+        finished = True
+
+    if not finished:
+        os.chdir('madevent')
+        lines = ['pythia8']
+        if save_hepmc is None:
+            lines.append('set HEPMCoutput:file fifo@%s/events_%i.hepmc' % (tmpdir, seed))
+        else:
+            lines.append('set HEPMCoutput:file %s/events_%i.hepmc' % (tmpdir, seed))
+        with open('mgrunscript', "w") as text_file:
+            text_file.write('\n'.join(lines))
+        subprocess.check_call('./bin/madevent --debug shower GridRun < mgrunscript', shell=True)
 else:
     subprocess.check_call(['cp', '%s/events_%i.hepmc.gz' % (load_hepmc, seed), '%s/events_%i.hepmc.gz' % (tmpdir, seed)])
     subprocess.check_call(['gunzip', '%s/events_%i.hepmc.gz' % (tmpdir, seed)])
 
 
 os.chdir(iwd)
-rivet_args = ['rivet', '--analysis=%s' % plugins, '%s/events_%i.hepmc' % (tmpdir, seed), '-o', '%s/Rivet_%i.yoda' % (outdir, seed)]
-if ignore_beams:
-    rivet_args.append('--ignore-beams')
-subprocess.check_call(rivet_args)
+
+if not finished:
+    rivet_args = ['rivet', '--analysis=%s' % plugins, '%s/events_%i.hepmc' % (tmpdir, seed), '-o', '%s/Rivet_%i.yoda' % (outdir, seed)]
+    if ignore_beams:
+        rivet_args.append('--ignore-beams')
+    subprocess.check_call(rivet_args)
 
 if save_hepmc is not None:
     subprocess.check_call(['mkdir', '-p', save_hepmc])
