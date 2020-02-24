@@ -38,7 +38,6 @@ which parametrizes deviations in the cross section in terms of the c_j parameter
 
 Note that this workflow has only been tested on lxplus so far, and for CMS users please ensure the CMSSW environment is **not set** when running scripts in EFT2Obs.
 
-<a id="initial-setup"></a>
 ## Initial setup
 
 Follow these steps to set up and install the relevant software packages.
@@ -62,7 +61,6 @@ Then run the following scripts to download and install LHAPDF, Madgraph_aMC@NLO,
 
 The first script installs LHAPDF and Magraph, then applies patches to the Madgraph-Pythia interface that are needed to make valid HepMC output with stored event weights and to perform a transformation of these weights that is described in more detail below.
 
-<a id="setup-models"></a>
 ## Setup models
 
 The Madgraph-compatible models you wish to study should be installed next. Scripts are provided to do this for two commonly used models: the Higgs Effective Lagrangian (HEL) and SMEFTsim. Other models can be added following their respective instructions.
@@ -74,7 +72,6 @@ The Madgraph-compatible models you wish to study should be installed next. Scrip
 
 *Note: a patch is provided for the HEL model that will fix the mass of the Z boson, otherwise by default this will vary as a function of the EFT parameters: `patch MG5_aMC_v2_6_7/models/HEL_UFO/parameters.py setup/HEL_fix_MZ__parameters.py.patch`*
 
-<a id="setup-rivet-routines"></a>
 ## Setup Rivet routines
 
 The Rivet routines which define the fiducial regions and obserbables of interest should be placed in the `EFT2Obs/RivetPlugins` directory. Two routines for the Higgs STXS are already provided: `HiggsTemplateCrossSectionsStage1` and `HiggsTemplateCrossSections`  which contain the stage 1 and 1.1 definitions respectively. Whenever new routines are added or existing ones modified they should be recompiled with:
@@ -83,7 +80,6 @@ The Rivet routines which define the fiducial regions and obserbables of interest
 ./scripts/setup_rivet_plugins.sh
 ```
 
-<a id="process-specific-workflow"></a>
 ## Process-specific workflow
 
 The main steps for defining a process, generating events and extracting scaling factors for observables are outlined below:
@@ -92,7 +88,6 @@ The main steps for defining a process, generating events and extracting scaling 
 
 In this section for clarity we will follow a specific example, ZH production in the HEL model with the STXS Rivet routine, but the steps are generic and it should be straightforward to run with other processes or models.
 
-<a id="setup-process"></a>
 ### Setup process
 
 Each process+model combination we want to study first needs a dedicated sub-directory in `EFT2Obs/cards`. In this case we will use the pre-existing one for `zh-HEL`. Here we add a `proc_card.dat` specifying the model to import and the LO process we wish to generate:
@@ -124,12 +119,10 @@ To initialise this process in Madgraph run
 
 which creates the directory `MG5_aMC_v2_6_7/zh-HEL`.
 
-<a id="prepare-madgraph-cards"></a>
 ### Prepare Madgraph cards
 
 There are four further configuration cards that we need to specify: the `run_card.dat`, `pythia8_card.dat`, `param_card.dat` and `reweight_card.dat`. For the first two we can start from the default cards Madgraph created in the `MG5_aMC_v2_6_7/zh-HEL/Cards` directory. If these files do not already exist in our `cards/zh-HEL` directory then they will have been copied there in the `setup_process.sh` step above. If necessary edit these cards to set the desired values for the generation or showering parameters. In this example the cards have already been configured in the repository. *Note for CMS users: to emulate the Pythia configuration in official CMS sample production the lines in `resources/pythia8/cms_default_2018.dat` can be added to the `pythia8_card.cat`*.
 
-<a id="config-file"></a>
 #### Config file
 
 To define `param_card.dat` and create `reweight_card.dat` we first need to make an EFT2Obs-specific configuration file that will keep track of which (subset of) model parameters we want to study and what values they should be set to in the reweighting procedure. The initial config is generated with
@@ -177,7 +170,6 @@ All properties in the `parameter_defaults` block are assumed to apply to each pa
 
 Note that all parameters in the specified blocks not explicitly listed here will be set to `default_val` in the `inactive` part of the config. This will usually correspond to the SM value for the parameters. If some parameters should take a different value then this can be set with the argument `--set-inactive [BLOCK]:[ID1]=[VAL1],[ID2]=[VAL2] ...`.
 
-<a id="param_carddat"></a>
 #### param_card.dat
 
 Next we make the `param_card.dat` that will be used for the initial event generation:
@@ -188,7 +180,6 @@ python scripts/make_param_card.py -p zh-HEL -c config_HEL_STXS.json -o cards/zh-
 
 The script take the default card in `MG5_aMC_v2_6_7/zh-HEL/Cards` and will report which parameter values are changed.
 
-<a id="reweight_carddat"></a>
 #### reweight_card.dat
 
 The reweight card specifies a set of parameter points that should be evaluated in the matrix element reweighting step. It is generated using the config with:
@@ -197,7 +188,6 @@ The reweight card specifies a set of parameter points that should be evaluated i
 python scripts/make_reweight_card.py config_HEL_STXS.json cards/zh-HEL/reweight_card.dat
 ```
 
-<a id="make-the-gridpack"></a>
 ### Make the gridpack
 
 To make the event generation more efficient and easier to run in parallel we first produce a gridpack for the process:
@@ -214,7 +204,6 @@ Once complete the gridpack `gridpack_zh-HEL.tar.gz` will be copied to the main d
 
 An addtional file, `rw_module_zh-HEL.tar.gz` is also produced. See the section below on standalone reweighting for more information.
 
-<a id="event-generation-step"></a>
 ### Event generation step
 
 Now everything is set up we can proceed to the event generation.
@@ -265,7 +254,6 @@ Note that during the workflow the event weights that are added by Madgraph are t
 
 ![weight_table](/resources/docs/weight_table.png)
 
-<a id="extract-scaling-functions"></a>
 ### Extract scaling functions
 
 In this final step we first merge the yoda output files:
@@ -345,7 +333,6 @@ where the arguments to `--draw` are of the format `PAR1=X1,PAR2=X2,..:COLOR`. Th
 
 ![pT_V](/resources/docs/HiggsTemplateCrossSections_pT_V.png)
 
-<a id="standalone-reweighting"></a>
 ## Standalone reweighting
 
 The matrix element library madgraph generates can be exported and used standalone with a python interface. EFT2Obs includes a wrapper python module, `scripts/standalone_reweight.py` that makes it straightforward to run the full set of reweighting points on a given event. This module has no dependencies on other EFT2Obs code so can be run from any location.
@@ -393,7 +380,6 @@ weights = rw.ComputeWeights(parts, pdgs, helicities, status, alphas, use_helicit
 
 The ComputeWeights function will print an error message if the particle configuration is not defined in the matrix element library.
 
-<a id="known-limitations"></a>
 ## Known limitations
 
 The following limitations currently apply. Links to GitHub issues indicate which are being actively worked on. Other issues or feature requests should also be reported there.
