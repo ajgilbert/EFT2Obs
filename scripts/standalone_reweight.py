@@ -19,7 +19,6 @@ def GetConfigFile(filename):
     return cfg
 
 
-
 class StandaloneReweight:
 
     def __init__(self, rw_pack):
@@ -56,7 +55,7 @@ class StandaloneReweight:
         print '>> Accepted PDG lists:'
         for pdgs in self.all_pdgs:
             print '   - %s' % pdgs
-        print self.hel_dict
+        # print self.hel_dict
         # print self.all_pdgs
         # print self.sorted_pdgs
 
@@ -122,7 +121,7 @@ class StandaloneReweight:
                 out[3] = 0
             return out
 
-    def ComputeWeights(self, parts, pdgs, hels, stats, alphas, dohelicity=True):
+    def ComputeWeights(self, parts, pdgs, hels, stats, alphas, dohelicity=True, verb=False):
         assert len(parts) == len(pdgs) == len(hels) == len(stats)
         res = [1.0] * self.N
 
@@ -157,7 +156,8 @@ class StandaloneReweight:
                 reorder_pids.append(init_pdg_dict[target].pop(0))
             else:
                 reorder_pids.append(fnal_pdg_dict[target].pop(0))
-        print 'Event layout is %s, matching target layout %s => ordering is %s' % (selected_pdgs, target_pdgs, reorder_pids)
+        if verb:
+            print '>> Event layout is %s, matching target layout %s => ordering is %s' % (selected_pdgs, target_pdgs, reorder_pids)
 
         final_pdgs = []
         final_parts = []
@@ -182,16 +182,17 @@ class StandaloneReweight:
             t_final_hels = tuple(final_hels)
             if t_final_hels in hel_dict:
                 nhel = hel_dict[t_final_hels]
-                print 'Selected nhel=%i, from dict %s' % (nhel, self.all_prefix[idx])
+                if verb:
+                    print '>> Selected nhel=%i, from dict %s' % (nhel, self.all_prefix[idx])
+            else:
+                print '>> Helicity configuration %s was not found in dict, using -1' % final_hels
         scale2 = 0.
-        # alphas = writer.hepeup.AQCDUP
         val_ref = 1.0
         for iw in xrange(self.N):
             val = self.mods[iw].smatrixhel(final_pdgs, final_parts_i, alphas, scale2, nhel)
             if iw == 0:
                 val_ref = val
             res[iw] = val / val_ref
-        # print res
         return res
 
 
