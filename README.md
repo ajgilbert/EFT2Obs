@@ -4,6 +4,26 @@ A tool to automatically parametrize the effect of EFT coefficients on arbitrary 
 
 ---
 
+<!-- MarkdownTOC -->
+
+- [Initial setup](#initial-setup)
+- [Setup models](#setup-models)
+- [Setup Rivet routines](#setup-rivet-routines)
+- [Process-specific workflow](#process-specific-workflow)
+  - [Setup process](#setup-process)
+  - [Prepare Madgraph cards](#prepare-madgraph-cards)
+    - [Config file](#config-file)
+    - [param_card.dat](#param_carddat)
+    - [reweight_card.dat](#reweight_carddat)
+  - [Make the gridpack](#make-the-gridpack)
+  - [Event generation step](#event-generation-step)
+  - [Extract scaling functions](#extract-scaling-functions)
+- [Standalone reweighting](#standalone-reweighting)
+- [Known limitations](#known-limitations)
+
+<!-- /MarkdownTOC -->
+
+
 The assumption is that the cross section for a bin i can be expressed as the sum
 
 ![cross section equation](/resources/docs/sigma_eqn.png)
@@ -176,7 +196,13 @@ To make the event generation more efficient and easier to run in parallel we fir
 ./scripts/make_gridpack.sh zh-HEL
 ```
 
-Once complete the gridpack `gridpack_zh-HEL.tar.gz` will be copied to the main directory.
+Once complete the gridpack `gridpack_zh-HEL.tar.gz` will be copied to the main directory. The script can also produce a standalone version of the matrix-element code. This can be useful for reweighting events outside of the EFT2Obs tool. To produce this, add an additional flag:
+
+```sh
+./scripts/make_gridpack.sh zh-HEL 1
+```
+
+An addtional file, `rw_module_zh-HEL.tar.gz` is also produced. See the section below on standalone reweighting for more information.
 
 ### Event generation step
 
@@ -204,6 +230,7 @@ where the full set of options is:
  - `--load-hepmc [path]` load the existing HepMC file from the relative or absolute directory given by `[path]`. The input file must be of the form `[path]/events_[X].hepmc.gz` where `[X]` is the RNG seed. All prior steps are skipped. Note that it does not make sense to set both `--load-lhe` and `--load-hepmc`.
  - `--rivet-ignore-beams` sets the `--ignore-beams` option when running Rivet, useful for cases where only a particle decay is simulated, instead of a full collision.
  - `--no-cleanup` prevents the local working directory (named `gridpack_run_[X]`) from being deleted at the end, can be useful for debugging.
+ - `--to-step [lhe,shower,rivet]` stop after the given step, no further processing is performed. Useful if, for example, you only want to generate the LHE files and not run the rivet routine.
 
 Since it is usually not feasible to generate the desired number of events in a single job, a wrapper script `scripts/launch_jobs.py` is provided which can automate running a set of jobs in parallel, each with a different RNG seed so that the events are statistically independent. This script passes through all command line options to `run_gridpack.py`, but adds several extra options to control how the jobs run:
 
@@ -305,6 +332,53 @@ where the arguments to `--draw` are of the format `PAR1=X1,PAR2=X2,..:COLOR`. Th
 
 
 ![pT_V](/resources/docs/HiggsTemplateCrossSections_pT_V.png)
+
+## Standalone reweighting
+
+The matrix element library madgraph generates can be exported and used standalone with a python interface. EFT2Obs includes a wrapper python module, `scripts/standalone_reweight.py` that makes it straightforward to run the full set of reweighting points on a given event. This module has no dependencies on other EFT2Obs code so can be run from any location.
+
+The steps to making a complete standalone directory are:
+
+1) When running `make_gridpack.sh` add an extra flag to also export the standalone matrix element library:
+
+```sh
+./scripts/make_gridpack.sh zh-HEL 1
+# An addtional file, rw_module_zh-HEL.tar.gz, is created
+```
+
+2) Run the script `make_standalone.py`. This creates a directory, specified by `-o` which will contain: the matix library from madgraph, a copy of the EFT2Obs config file (specified with `-c`), and a set of full param_cards, one for each reweighting point.
+
+```sh
+python scripts/make_standalone.py -p zh-HEL -o rw_zh-HEL -c config_HEL_STXS.json --rw-module rw_module_zh-HEL.tar.gz
+```
+
+3) This directory can then be used in conjunction with the `standalone_reweight.py` module:
+
+```py
+from standalone_reweight import *
+
+rw = StandaloneReweight('rw_zh-HEL')
+
+# Now specify the list of ingoing and outgoing particles and other properties.
+# NB: all lists must be the same length!
+parts = [
+  # Incoming parton 1:   [E, px, py, pz],
+  # Incoming parton 2:   [E, px, py, pz],
+  # Outgoing particle 1: [E, px, py, pz],
+  # ...
+  #Outgoing particle N:  [E, px, py, pz]
+]
+pdgs = []  # List PDGs corresponding to the above particles [int]
+helicities = [] # List of helicities corresponding to the above particles [int]
+status = [] # # List of status codes, should be -1 for incoming, +1 for outgoing [int]
+alphas = 0.137 # event-specific value of alphas
+use_helicity = True # Set to False to sum over helicity states, e.g. if helicity information not available
+
+# Returns a list of weights in the same order specified by the EFT2Obs reweight_card.dat
+weights = rw.ComputeWeights(parts, pdgs, helicities, status, alphas, use_helicity)
+```
+
+The ComputeWeights function will print an error message if the particle configuration is not defined in the matrix element library.
 
 ## Known limitations
 
