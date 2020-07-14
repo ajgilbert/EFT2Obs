@@ -8,7 +8,8 @@ import subprocess
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--process', '-p', default='zh-HEL', help="Label of the process, must correspond to the dir name that was created in the MG dir")
-parser.add_argument('--rw-module', default='rw_module_zh-HEL.tar.gz', help="Reweighting module exported in the make_gridpack.sh step")
+parser.add_argument('--rw-module', default=None, help="Reweighting module exported in the make_gridpack.sh step")
+parser.add_argument('--rw-dir', default=None, help="Standalone output from madgraph")
 parser.add_argument('--output', '-o', default='rw_config', help="Output name for directory")
 parser.add_argument('--config', '-c', default='config.json')
 args = parser.parse_args()
@@ -18,11 +19,17 @@ process = args.process
 os.mkdir(args.output)
 
 # Copy the rwgt directory
-subprocess.check_call(['tar', '-xf', args.rw_module, '-C', args.output])
+if args.rw_module is not None:
+    subprocess.check_call(['tar', '-xf', args.rw_module, '-C', args.output])
+elif args.rw_dir is not None:
+    subprocess.check_call(['mkdir', '-p', '%s/rwgt' % args.output])
+    subprocess.check_call(['cp', '-r', '%s' % args.rw_dir, '%s/rwgt/rw_me' % args.output])
+
 subprocess.check_call(['cp', args.config, '%s/config.json' % args.output])
 
 sys.path.append('%s/%s' % (os.environ['PWD'], os.environ['MG_DIR']))
-sys.path.append(os.path.join(os.environ['MG_DIR'], process, 'bin', 'internal'))
+# sys.path.append(os.path.join(os.environ['MG_DIR'], process, 'bin', 'internal'))
+sys.path.append(os.path.join(os.environ['MG_DIR'], 'models'))
 
 import check_param_card as param_card_mod
 

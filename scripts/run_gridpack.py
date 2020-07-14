@@ -75,7 +75,7 @@ gridpack_dir = 'gridpack_run_%i' % seed
 
 # Check if TMPDIR is set
 if 'TMPDIR' not in os.environ:
-    tmpdir = subprocess.check_output(['mktemp', '-d'])
+    tmpdir = subprocess.check_output(['mktemp', '-d']).strip()
     print '>> No TMPDIR was set, created %s' % tmpdir
 else:
     tmpdir = os.environ['TMPDIR']

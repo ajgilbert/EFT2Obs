@@ -1,5 +1,14 @@
 import json
 import sys
+import argparse
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument('config', help="Input config file")
+parser.add_argument('output', help="Output name for the reweight_card.dat")
+parser.add_argument('--prepend', nargs='*', default=None)
+
+args = parser.parse_args()
 
 
 def PrintBlock(pars, vals, index):
@@ -10,7 +19,7 @@ def PrintBlock(pars, vals, index):
     return res
 
 
-with open(sys.argv[1]) as jsonfile:
+with open(args.config) as jsonfile:
     cfg = json.load(jsonfile)
 
 pars = cfg['parameters']
@@ -23,6 +32,9 @@ for p in pars:
 # print pars
 
 output = ['change rwgt_dir rwgt']
+
+if args.prepend is not None:
+    output.extend(args.prepend)
 
 initvals = [X['sm'] for X in pars]
 
@@ -49,8 +61,7 @@ for i in xrange(len(pars)):
         current_i += 1
 
 
-if len(sys.argv) > 2:
-    with open(sys.argv[2], 'w') as outfile:
-            outfile.write('\n'.join(output))
+with open(args.output, 'w') as outfile:
+        outfile.write('\n'.join(output))
 
-print '>> Created %s with %i reweighting points' % (sys.argv[2], current_i)
+print '>> Created %s with %i reweighting points' % (args.output, current_i)

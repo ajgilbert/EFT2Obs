@@ -6,6 +6,7 @@ import subprocess
 import argparse
 import math
 import json
+import numpy
 from collections import defaultdict
 
 def GetConfigFile(filename):
@@ -22,6 +23,11 @@ def GetConfigFile(filename):
 class StandaloneReweight:
 
     def __init__(self, rw_pack):
+        self.mode = 1
+        self.references = {}
+        self.caches = {}
+        self.tocache = ['couplings', 'weak', 'rscale', 'strong', 'masses', 'widths']
+
         self.target_dir = os.path.abspath(rw_pack)
         self.cfg = GetConfigFile(os.path.join(self.target_dir, 'config.json'))
         # self.module = module
@@ -63,29 +69,74 @@ class StandaloneReweight:
         iwd = os.getcwd()
 
         subproc_dir = os.path.join(self.target_dir, 'rwgt/rw_me/SubProcesses')
-
-        if not os.path.isdir(os.path.join(subproc_dir, 'rwdir_0')):
-            os.chdir(subproc_dir)
-            for i in xrange(self.N):
-                os.mkdir('rwdir_%i' % i)
-                subprocess.check_call(['cp', 'allmatrix2py.so', 'rwdir_%i/allmatrix2py.so' % i])
-            os.chdir(iwd)
-        else:
-            print '>> Reusing working directory %s' % self.target_dir
-
         sys.path.append(subproc_dir)
         self.mods = []
 
-        os.chdir(subproc_dir)
+        if self.mode == 0:
+            if not os.path.isdir(os.path.join(subproc_dir, 'rwdir_0')):
+                os.chdir(subproc_dir)
+                for i in xrange(self.N):
+                    os.mkdir('rwdir_%i' % i)
+                    subprocess.check_call(['cp', 'allmatrix2py.so', 'rwdir_%i/allmatrix2py.so' % i])
+                os.chdir(iwd)
+            else:
+                print '>> Reusing working directory %s' % self.target_dir
 
-        for i in xrange(self.N):
-            sys.path[-1] = '%s/rwdir_%i' % (subproc_dir, i)
-            # print imp.find_module('allmatrix2py')
+
+            os.chdir(subproc_dir)
+
+            for i in xrange(self.N):
+                sys.path[-1] = '%s/rwdir_%i' % (subproc_dir, i)
+                # print imp.find_module('allmatrix2py')
+                self.mods.append(imp.load_module('allmatrix2py', *imp.find_module('allmatrix2py')))
+                del sys.modules['allmatrix2py']
+                self.mods[-1].initialise('%s/param_card_%i.dat' % (self.target_dir, i))
+
+            os.chdir(iwd)
+        elif self.mode == 1:
+            os.chdir(subproc_dir)
             self.mods.append(imp.load_module('allmatrix2py', *imp.find_module('allmatrix2py')))
-            del sys.modules['allmatrix2py']
-            self.mods[-1].initialise('%s/param_card_%i.dat' % (self.target_dir, i))
+            mod = self.mods[0]
+            self.references = {}
 
-        os.chdir(iwd)
+            for block in self.tocache:
+                print '>>> %s' % block
+                self.references[block] = []
+                self.caches[block] = []
+                # print 'here'
+                fortran_dict = getattr(mod, block).__dict__
+                for key, val in fortran_dict.iteritems():
+                    self.references[block].append((key, val))
+                # print self.references[block]
+
+            for i in xrange(self.N):
+                mod.initialise('%s/param_card_%i.dat' % (self.target_dir, i))
+                for block in self.tocache:
+                    cache = []
+                    for key, val in self.references[block]:
+                        cache.append(val.copy())
+                    self.caches[block].append(cache)
+
+                # for i in range(len(self.references[block])):
+                #     vals = [X[i] for X in self.caches[block]]
+                #     allequal = vals.count(vals[0]) == len(vals)
+                #     print self.references[block][i], allequal
+            # print self.caches
+            # print self.references
+            # print self.references['couplings']
+            # for key, val in mod.couplings.__dict__.iteritems():
+            #     cache.append((key, val, val.copy()))
+            # print cache
+            os.chdir(iwd)
+            # sys.exit(0)
+
+    def RestoreCache(self, index):
+        for block in self.tocache:
+            restore_to = self.references[block]
+            restore_from = self.caches[block][index]
+            for i in range(len(restore_to)):
+                numpy.copyto(restore_to[i][1], restore_from[i])
+
 
     def SortPDGs(self, pdgs):
         return sorted(pdgs[:2]) + sorted(pdgs[2:])
@@ -189,7 +240,11 @@ class StandaloneReweight:
         scale2 = 0.
         val_ref = 1.0
         for iw in xrange(self.N):
-            val = self.mods[iw].smatrixhel(final_pdgs, final_parts_i, alphas, scale2, nhel)
+            if self.mode == 0:
+                val = self.mods[iw].smatrixhel(final_pdgs, final_parts_i, alphas, scale2, nhel)
+            elif self.mode == 1:
+                self.RestoreCache(iw)
+                val = self.mods[0].smatrixhel(final_pdgs, final_parts_i, alphas, scale2, nhel)
             if iw == 0:
                 val_ref = val
             res[iw] = val / val_ref
