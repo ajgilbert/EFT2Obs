@@ -4,12 +4,13 @@ source env.sh
 set -e
 
 if [[ $# -lt 1 ]]; then
-    echo "Insufficient number of arguments, usage is ./run_gridpack.sh name [export = 0 or 1]"
+    echo "Insufficient number of arguments, usage is ./run_gridpack.sh name [export = 0 or 1] [cores=N]"
     exit 1
 fi
 
 PROCESS=$1
 EXPORTRW=${2-0}
+CORES=${3-0}
 IWD=${PWD}
 
 ### SET ENVIRONMENT VARIABLES HERE
@@ -17,6 +18,8 @@ RUNLABEL="pilotrun"
 ###
 
 cp cards/${PROCESS}/{param,reweight,run,pythia8}_card.dat ${MG_DIR}/${PROCESS}/Cards/
+# Also need to overwrite the default card, or we might lose some options
+cp cards/${PROCESS}/pythia8_card.dat ${MG_DIR}/${PROCESS}/Cards/pythia8_card_default.dat
 
 pushd ${MG_DIR}/${PROCESS}
 # Create MG config
@@ -29,7 +32,12 @@ pushd ${MG_DIR}/${PROCESS}
 } > mgrunscript
 
 if [ -d "${MG_DIR}/${PROCESS}/Events/${RUNLABEL}" ]; then rm -r ${MG_DIR}/${PROCESS}/Events/${RUNLABEL}; fi
-./bin/generate_events ${RUNLABEL} -n < mgrunscript
+
+if [ "$CORES" -gt "0" ]; then
+	./bin/generate_events ${RUNLABEL} --nb_core="${CORES}" -n < mgrunscript
+else
+	./bin/generate_events ${RUNLABEL} -n < mgrunscript
+fi
 
 mkdir "gridpack_${PROCESS}"
 

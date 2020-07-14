@@ -19,7 +19,7 @@ def Translate(arg, translations):
 
 
 def MakeHist(name, jhist, vals=dict(), noSquare=False, noCross=False):
-    edges = array('d', jhist['edges'])
+    edges = array('d', [jhist['edges'][0][0]] + [X[1] for X in jhist['edges']])
     h = ROOT.TH1D(name, name, len(edges) - 1, edges)
     h_dev = ROOT.TH1D(name, name, len(edges) - 1, edges)
     for i in xrange(1, h.GetNbinsX() + 1):
