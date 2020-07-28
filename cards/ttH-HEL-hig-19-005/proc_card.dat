@@ -1,0 +1,5 @@
+import model HEL_UFO
+
+generate p p > t t~ h NP<=1 @0
+
+output ttH-HEL-hig-19-005 -nojpeg

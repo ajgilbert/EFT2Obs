@@ -1,0 +1,5 @@
+import model HEL_UFO
+
+generate p p > h j j / j l+ l- vl vl~ h a QCD=0 NP<=1
+
+output qqH-HEL-hig-19-005 -nojpeg
