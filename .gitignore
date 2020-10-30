@@ -5,7 +5,15 @@ __pycache__/
 
 # C extensions
 *.so
-
+*.json
+*.txt
+*.tex
+*.pdf
+*.png
+*.yoda
+analysis/
+lhapdf/
+jobs/
 Rivet-*/
 YODA*/
 MG5_aMC_v*/
@@ -14,3 +22,5 @@ fjcontrib-*/
 rivet-bootstrap
 hepmc*/
 local/
+*.tar.gz
+

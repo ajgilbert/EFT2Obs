@@ -88,7 +88,8 @@ nbins = hists[0].numBins
 
 if is2D:
     edges = [[list(hists[0].bins[ib].xEdges), list(hists[0].bins[ib].yEdges)] for ib in xrange(nbins)]
-    areas = list(hists[0].volumes())
+    # areas = list(hists[0].volumes())
+    areas = [hists[0].bins[ib].volume for ib in xrange(nbins)]
 else:
     edges = [list(hists[0].bins[ib].xEdges) for ib in xrange(nbins)]
     areas = list(hists[0].areas())
@@ -205,7 +206,7 @@ if 'tex' in save_formats:
         line += r"""\parbox{0.8\columnwidth}{$1 """
         for term in res['bins'][ib]:
             terms = []
-            terms.append('%.1f\\,' % term[0])
+            terms.append('%.2f\\,' % term[0])
             if len(term[2:]) == 2 and term[2] == term[3]:
                 terms.append('{%s}^{2}' % Translate(term[2], translate_tex))
             else:
