@@ -1,0 +1,34 @@
+{
+    "blocks": [
+        "frblock"
+    ],
+    "inactive": {
+        "default_val": 0.0,
+        "parameters": [
+            {
+                "block": "frblock",
+                "index": 18,
+                "name": "lambdasmeft",
+                "val": 1000.0
+            },
+            {
+                "block": "frblock",
+                "index": 83,
+                "name": "mw0",
+                "val": 80.387
+            }
+        ]
+    },
+    "parameter_defaults": {
+        "block": "frblock",
+        "gen": 0.0,
+        "sm": 0.0,
+        "val": 0.01
+    },
+    "parameters": [
+        {
+            "index": 21,
+            "name": "cw"
+        }
+    ]
+}

@@ -1,0 +1,128 @@
+change rwgt_dir rwgt
+change helicity False
+launch --rwgt_name=rw0000
+set dim6 1 0
+set dim6 2 0
+set dim6 3 0
+set dim6 4 0
+set dim6 5 0
+launch --rwgt_name=rw0001
+set dim6 1 0.05
+set dim6 2 0
+set dim6 3 0
+set dim6 4 0
+set dim6 5 0
+launch --rwgt_name=rw0002
+set dim6 1 0.1
+set dim6 2 0
+set dim6 3 0
+set dim6 4 0
+set dim6 5 0
+launch --rwgt_name=rw0003
+set dim6 1 0
+set dim6 2 0.05
+set dim6 3 0
+set dim6 4 0
+set dim6 5 0
+launch --rwgt_name=rw0004
+set dim6 1 0
+set dim6 2 0.1
+set dim6 3 0
+set dim6 4 0
+set dim6 5 0
+launch --rwgt_name=rw0005
+set dim6 1 0
+set dim6 2 0
+set dim6 3 0.05
+set dim6 4 0
+set dim6 5 0
+launch --rwgt_name=rw0006
+set dim6 1 0
+set dim6 2 0
+set dim6 3 0.1
+set dim6 4 0
+set dim6 5 0
+launch --rwgt_name=rw0007
+set dim6 1 0
+set dim6 2 0
+set dim6 3 0
+set dim6 4 0.05
+set dim6 5 0
+launch --rwgt_name=rw0008
+set dim6 1 0
+set dim6 2 0
+set dim6 3 0
+set dim6 4 0.1
+set dim6 5 0
+launch --rwgt_name=rw0009
+set dim6 1 0
+set dim6 2 0
+set dim6 3 0
+set dim6 4 0
+set dim6 5 0.05
+launch --rwgt_name=rw0010
+set dim6 1 0
+set dim6 2 0
+set dim6 3 0
+set dim6 4 0
+set dim6 5 0.1
+launch --rwgt_name=rw0011
+set dim6 1 0.1
+set dim6 2 0.1
+set dim6 3 0
+set dim6 4 0
+set dim6 5 0
+launch --rwgt_name=rw0012
+set dim6 1 0.1
+set dim6 2 0
+set dim6 3 0.1
+set dim6 4 0
+set dim6 5 0
+launch --rwgt_name=rw0013
+set dim6 1 0.1
+set dim6 2 0
+set dim6 3 0
+set dim6 4 0.1
+set dim6 5 0
+launch --rwgt_name=rw0014
+set dim6 1 0.1
+set dim6 2 0
+set dim6 3 0
+set dim6 4 0
+set dim6 5 0.1
+launch --rwgt_name=rw0015
+set dim6 1 0
+set dim6 2 0.1
+set dim6 3 0.1
+set dim6 4 0
+set dim6 5 0
+launch --rwgt_name=rw0016
+set dim6 1 0
+set dim6 2 0.1
+set dim6 3 0
+set dim6 4 0.1
+set dim6 5 0
+launch --rwgt_name=rw0017
+set dim6 1 0
+set dim6 2 0.1
+set dim6 3 0
+set dim6 4 0
+set dim6 5 0.1
+launch --rwgt_name=rw0018
+set dim6 1 0
+set dim6 2 0
+set dim6 3 0.1
+set dim6 4 0.1
+set dim6 5 0
+launch --rwgt_name=rw0019
+set dim6 1 0
+set dim6 2 0
+set dim6 3 0.1
+set dim6 4 0
+set dim6 5 0.1
+launch --rwgt_name=rw0020
+set dim6 1 0
+set dim6 2 0
+set dim6 3 0
+set dim6 4 0.1
+set dim6 5 0.1

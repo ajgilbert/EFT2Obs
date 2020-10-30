@@ -1,0 +1,13 @@
+import model HEL_UFO-massless
+
+# Define multiparticle labels
+define lep = mu+ mu-
+define nu = vm vm~
+
+# Specify process(es) to run
+generate p p > lep nu a QED=3 NP<=1 @0
+add process p p > lep nu j a QED=3 NP<=1 @1
+add process p p > lep nu j j a QED=3 NP<=1 @2
+#add process p p > lep nu j j j a / h Z NP<=1 @3
+
+output WG-HEL-130-300

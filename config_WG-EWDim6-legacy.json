@@ -1,0 +1,21 @@
+{
+    "blocks": [
+        "dim6"
+    ],
+    "inactive": {
+        "default_val": 0.0,
+        "parameters": []
+    },
+    "parameter_defaults": {
+        "block": "dim6",
+        "gen": 0.0,
+        "sm": 0.0,
+        "val": 0.1
+    },
+    "parameters": [
+        {
+            "index": 1,
+            "name": "cwwwl2"
+        }
+    ]
+}

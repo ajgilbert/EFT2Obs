@@ -1,0 +1,12 @@
+import model SMEFTsim_A_U35_MwScheme_UFO_v2_1-CW
+
+# Define multiparticle labels
+define lep = mu+ mu-
+define nu = vm vm~
+
+# Specify process(es) to run
+generate p p > lep nu a QED=4 NP<=1 SMHLOOP=0 @0
+add process p p > lep nu j a QED=4 NP<=1 SMHLOOP=0 @1
+add process p p > lep nu j j a QED=4 NP<=1 SMHLOOP=0 @2
+
+output WG-SMEFTsim-300-500

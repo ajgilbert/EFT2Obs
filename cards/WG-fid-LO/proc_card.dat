@@ -1,0 +1,11 @@
+import model sm-no_b_mass
+
+# Define multiparticle labels
+define lep = e+ e-
+define nu = ve ve~
+define p = p b b~
+define j = j b b~
+
+# Specify process(es) to run
+generate p p > lep nu a @0
+output WG-fid-LO

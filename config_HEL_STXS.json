@@ -1,0 +1,53 @@
+{
+    "blocks": [
+        "newcoup"
+    ],
+    "inactive": {
+        "default_val": 0.0,
+        "parameters": []
+    },
+    "parameter_defaults": {
+        "block": "newcoup",
+        "gen": 0.0,
+        "sm": 0.0,
+        "val": 0.01
+    },
+    "parameters": [
+        {
+            "index": 4,
+            "name": "cu"
+        },
+        {
+            "index": 5,
+            "name": "cd"
+        },
+        {
+            "index": 6,
+            "name": "cl"
+        },
+        {
+            "index": 7,
+            "name": "cww"
+        },
+        {
+            "index": 8,
+            "name": "cb"
+        },
+        {
+            "index": 9,
+            "name": "chw"
+        },
+        {
+            "index": 10,
+            "name": "chb"
+        },
+        {
+            "index": 11,
+            "name": "ca"
+        },
+        {
+            "index": 12,
+            "name": "cg"
+        }
+    ]
+}
