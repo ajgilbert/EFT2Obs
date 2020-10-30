@@ -6,7 +6,9 @@ import subprocess
 import argparse
 import math
 import json
+import numpy
 from collections import defaultdict
+
 
 def GetConfigFile(filename):
     with open(filename) as jsonfile:
@@ -22,11 +24,19 @@ def GetConfigFile(filename):
 class StandaloneReweight:
 
     def __init__(self, rw_pack):
+        self.mode = 1
+        self.references = {}
+        self.caches = {}
+        self.tocache = ['couplings', 'weak', 'rscale', 'strong', 'masses', 'widths']
+
         self.target_dir = os.path.abspath(rw_pack)
         self.cfg = GetConfigFile(os.path.join(self.target_dir, 'config.json'))
         # self.module = module
         # self.cards = cards_dir
         self.Npars = len(self.cfg['parameters'])
+        self.parVals = [X['val'] for X in self.cfg['parameters']]
+        self.pars = [X['name'] for X in self.cfg['parameters']]
+
         self.N = 1 + self.Npars * 2 + (self.Npars * self.Npars - self.Npars) / 2
 
         print '>> %i parameters, %i reweight points' % (self.Npars, self.N)
@@ -63,29 +73,72 @@ class StandaloneReweight:
         iwd = os.getcwd()
 
         subproc_dir = os.path.join(self.target_dir, 'rwgt/rw_me/SubProcesses')
-
-        if not os.path.isdir(os.path.join(subproc_dir, 'rwdir_0')):
-            os.chdir(subproc_dir)
-            for i in xrange(self.N):
-                os.mkdir('rwdir_%i' % i)
-                subprocess.check_call(['cp', 'allmatrix2py.so', 'rwdir_%i/allmatrix2py.so' % i])
-            os.chdir(iwd)
-        else:
-            print '>> Reusing working directory %s' % self.target_dir
-
         sys.path.append(subproc_dir)
         self.mods = []
 
-        os.chdir(subproc_dir)
+        if self.mode == 0:
+            if not os.path.isdir(os.path.join(subproc_dir, 'rwdir_0')):
+                os.chdir(subproc_dir)
+                for i in xrange(self.N):
+                    os.mkdir('rwdir_%i' % i)
+                    subprocess.check_call(['cp', 'allmatrix2py.so', 'rwdir_%i/allmatrix2py.so' % i])
+                os.chdir(iwd)
+            else:
+                print '>> Reusing working directory %s' % self.target_dir
 
-        for i in xrange(self.N):
-            sys.path[-1] = '%s/rwdir_%i' % (subproc_dir, i)
-            # print imp.find_module('allmatrix2py')
+
+            os.chdir(subproc_dir)
+
+            for i in xrange(self.N):
+                sys.path[-1] = '%s/rwdir_%i' % (subproc_dir, i)
+                # print imp.find_module('allmatrix2py')
+                self.mods.append(imp.load_module('allmatrix2py', *imp.find_module('allmatrix2py')))
+                del sys.modules['allmatrix2py']
+                self.mods[-1].initialise('%s/param_card_%i.dat' % (self.target_dir, i))
+
+            os.chdir(iwd)
+        elif self.mode == 1:
+            os.chdir(subproc_dir)
             self.mods.append(imp.load_module('allmatrix2py', *imp.find_module('allmatrix2py')))
-            del sys.modules['allmatrix2py']
-            self.mods[-1].initialise('%s/param_card_%i.dat' % (self.target_dir, i))
+            mod = self.mods[0]
+            self.references = {}
 
-        os.chdir(iwd)
+            for block in self.tocache:
+                print '>>> %s' % block
+                self.references[block] = []
+                self.caches[block] = []
+                fortran_dict = getattr(mod, block).__dict__
+                for key, val in fortran_dict.iteritems():
+                    self.references[block].append((key, val))
+                # print self.references[block]
+
+            for i in xrange(self.N):
+                mod.initialise('%s/param_card_%i.dat' % (self.target_dir, i))
+                for block in self.tocache:
+                    cache = []
+                    for key, val in self.references[block]:
+                        cache.append(val.copy())
+                    self.caches[block].append(cache)
+
+                # for i in range(len(self.references[block])):
+                #     vals = [X[i] for X in self.caches[block]]
+                #     allequal = vals.count(vals[0]) == len(vals)
+                #     print self.references[block][i], allequal
+            # print self.caches
+            # print self.references
+            # print self.references['couplings']
+            # for key, val in mod.couplings.__dict__.iteritems():
+            #     cache.append((key, val, val.copy()))
+            os.chdir(iwd)
+            # sys.exit(0)
+
+    def RestoreCache(self, index):
+        for block in self.tocache:
+            restore_to = self.references[block]
+            restore_from = self.caches[block][index]
+            for i in range(len(restore_to)):
+                numpy.copyto(restore_to[i][1], restore_from[i])
+
 
     def SortPDGs(self, pdgs):
         return sorted(pdgs[:2]) + sorted(pdgs[2:])
@@ -189,21 +242,98 @@ class StandaloneReweight:
         scale2 = 0.
         val_ref = 1.0
         for iw in xrange(self.N):
-            val = self.mods[iw].smatrixhel(final_pdgs, final_parts_i, alphas, scale2, nhel)
+            if self.mode == 0:
+                val = self.mods[iw].smatrixhel(final_pdgs, final_parts_i, alphas, scale2, nhel)
+            elif self.mode == 1:
+                self.RestoreCache(iw)
+                val = self.mods[0].smatrixhel(final_pdgs, final_parts_i, alphas, scale2, nhel)
             if iw == 0:
                 val_ref = val
             res[iw] = val / val_ref
         return res
 
+    def TransformWeights(self, raw_weights):
+        N = len(raw_weights)
+        verb = 0
+        if verb > 0:
+            print "-- Have %i weights" % N
+        out = [0.] * len(raw_weights)
+        out_unscaled = [0.] * len(raw_weights)
+        Npars = self.Npars
+        for i in xrange(N):
+            if verb > 0:
+                print " - %f" % raw_weights[i]
+            out[i] = raw_weights[i]
+            out_unscaled[i] = raw_weights[i]
 
-if __name__ == '___main___':
+        for ip in xrange(Npars):
+            s0 = raw_weights[0]
+            s1 = raw_weights[ip * 2 + 1]
+            s2 = raw_weights[ip * 2 + 2]
+            if verb > 0:
+                print " -- Doing %i" % ip
+                print "%f\t%f\t%f" % (s0, s1, s2)
+            s1 -= s0
+            s2 -= s0
+            if verb > 0:
+                print " - subtract s0: %f\t%f" % (s1, s2)
+            Ai = 4. * s1 - s2
+            Bii = s2 - Ai
+            if verb > 0:
+                print " - Result: %f\t%f" % (Ai, Bii)
+            out[ip * 2 + 1] = Ai
+            out[ip * 2 + 2] = Bii
+            out_unscaled[ip * 2 + 1] = (Ai / self.parVals[ip])
+            out_unscaled[ip * 2 + 2] = (Bii / (self.parVals[ip] * self.parVals[ip]))
+        crossed_offset = 1 + 2 * Npars
+        c_counter = 0
+        for ix in xrange(0, Npars):
+            for iy in xrange(ix + 1, Npars):
+                if verb > 0:
+                    print " -- Doing %i\t%i\t[%i]" % (ix, iy, crossed_offset + c_counter)
+                s = raw_weights[crossed_offset + c_counter]
+                sm = raw_weights[0]
+                sx = out[ix * 2 + 1]
+                sy = out[iy * 2 + 1]
+                sxx = out[ix * 2 + 2]
+                syy = out[iy * 2 + 2]
+                s -= (sm + sx + sy + sxx + syy)
+                out[crossed_offset + c_counter] = s
+                out_unscaled[crossed_offset + c_counter] = s / (self.parVals[ix] * self.parVals[iy])
+                if verb > 0:
+                    print " - Result: %f" % s
+                c_counter += 1
+
+        return out_unscaled
+
+    def CalculateWeight(self, transformed_weights, **kwargs):
+        # print kwargs
+        wt = transformed_weights[0]
+        for i in xrange(self.Npars):
+            par = self.pars[i]
+            if par in kwargs:
+                # print transformed_weights[i * 2 + 1], transformed_weights[i * 2 + 2]
+                wt += transformed_weights[i * 2 + 1] * kwargs[par]
+                wt += transformed_weights[i * 2 + 2] * kwargs[par] * kwargs[par]
+        crossed_offset = 1 + 2 * self.Npars
+        c_counter = 0
+        for ix in xrange(0, self.Npars):
+            for iy in xrange(ix + 1, self.Npars):
+                if self.pars[ix] in kwargs and self.pars[iy] in kwargs:
+                    # print transformed_weights[crossed_offset + c_counter] 
+                    wt += transformed_weights[crossed_offset + c_counter] * kwargs[self.pars[ix]] * kwargs[self.pars[iy]]
+                c_counter += 1
+        return wt
+
+if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--module', default='.')
-    parser.add_argument('--cards', default='rw_config')
-    parser.add_argument('--config', default='test.json')
+    # parser.add_argument('--cards', default='rw_config')
+    # parser.add_argument('--config', default='test.json')
     parser.add_argument('--helicity', type=int, default=1)
     parser.add_argument('-i', '--input', default='input.lhe')
     parser.add_argument('-o', '--output', default='output.lhe')
+    parser.add_argument('--validate', action='store_true')
     args = parser.parse_args()
 
     iwd = os.getcwd()
@@ -211,11 +341,10 @@ if __name__ == '___main___':
 
     ROOT.gROOT.ProcessLine('#include "LHEF.h"')
 
-    rw = StandaloneReweight(args.config, args.module, args.cards)
-
     # // Create Reader and Writer object
     reader = ROOT.LHEF.Reader(args.input)
     writer = ROOT.LHEF.Writer(args.output)
+    rw = StandaloneReweight(args.module)
     # # // Copy header and init blocks and write them out.
     # //  if ( reader.outsideBlock.length() ) std::cerr << reader.outsideBlock;
     # print reader.headerBlock
@@ -248,6 +377,12 @@ if __name__ == '___main___':
         # if reader.outsideBlock.length() ) std::cout << reader.outsideBlock;
         writer.eventComments().write(str(reader.eventComments), len(str(reader.eventComments)))
         writer.hepeup = reader.hepeup
+        existing = []
+        if args.validate:
+            print '>> Reading %i existing weights' % (writer.hepeup.weights.size() - 1)
+            # The first weight is the original weight - we should skip it
+            for iorig in xrange(1, writer.hepeup.weights.size()):
+                existing.append(writer.hepeup.weights[iorig].first)
         writer.hepeup.namedweights.clear()
         writer.hepeup.weights.clear()
 
@@ -266,6 +401,14 @@ if __name__ == '___main___':
 
         res = rw.ComputeWeights(parts, pdgs, hels, stats, writer.hepeup.AQCDUP, bool(args.helicity))
 
+        trans_res = rw.TransformWeights(res)
+
+        # print rw.CalculateWeight(trans_res, ca=0.01, c3w=0.01)
+
+        if args.validate:
+            for iw in xrange(min(len(existing), len(res))):
+                print '%-10f %-10f %-10f | %-10f' % (existing[iw] / existing[0], res[iw], res[iw] / (existing[iw] / existing[0]), trans_res[iw])
+
         for iw, wt in enumerate(res):
             weight = ROOT.LHEF.Weight()
             weight.name = 'rw%.4i' % iw
@@ -275,6 +418,3 @@ if __name__ == '___main___':
 
         writer.hepeup.heprup = writer.heprup
         writer.writeEvent()
-
-# sys.exit(0)
-

@@ -7,5 +7,11 @@
   "chw": "c_{HW}",
   "chb": "c_{HB}",
   "ca": "c_{A}",
-  "cg": "c_{g}"
+  "cg": "c_{g}",
+  "cwwwl2": "c_{3W}",
+  "cwl2": "c_{W}",
+  "cbl2": "c_{B}",
+  "cpwwwl2": "\\tilde{c}_{3W}",
+  "cpwl2": "\\tilde{c}_{W}",
+  "cpbl2": "\\tilde{c}_{B}"
 }
