@@ -339,20 +339,36 @@ The matrix element library madgraph generates can be exported and used standalon
 
 The steps to making a complete standalone directory are:
 
-1) When running `make_gridpack.sh` add an extra flag to also export the standalone matrix element library:
+1) The standalone module can be produced in one of two ways. The first is when running `make_gridpack.sh`, we can add an extra flag to also export the standalone matrix element library:
 
 ```sh
 ./scripts/make_gridpack.sh zh-HEL 1
 # An addtional file, rw_module_zh-HEL.tar.gz, is created
 ```
 
+Alternatively, if we are not interested in actually generating events, we can skip the integration and just generate and compile the matrix element code:
+
+```sh
+./scripts/setup_process_standalone.sh zh-HEL
+```
+
+This generates a special process directory with the `-standalone` postfix in the Madgraph directory.
+
 2) Run the script `make_standalone.py`. This creates a directory, specified by `-o` which will contain: the matix library from madgraph, a copy of the EFT2Obs config file (specified with `-c`), and a set of full param_cards, one for each reweighting point.
+
+If using the gridpack output in 1):
 
 ```sh
 python scripts/make_standalone.py -p zh-HEL -o rw_zh-HEL -c config_HEL_STXS.json --rw-module rw_module_zh-HEL.tar.gz
 ```
 
-3) This directory can then be used in conjunction with the `standalone_reweight.py` module:
+If using `setup_process_standalone.sh` without making a gridpack:
+
+```sh
+python scripts/make_standalone.py -p zh-HEL -o rw_zh-HEL -c config_HEL_STXS.json --rw-dir MG5_aMC_v2_6_7/zh-HEL-standalone
+```
+
+3) The output directory can then be used in conjunction with the `standalone_reweight.py` module:
 
 ```py
 from standalone_reweight import *
@@ -378,7 +394,17 @@ use_helicity = True # Set to False to sum over helicity states, e.g. if helicity
 weights = rw.ComputeWeights(parts, pdgs, helicities, status, alphas, use_helicity)
 ```
 
-The ComputeWeights function will print an error message if the particle configuration is not defined in the matrix element library.
+The ComputeWeights function will print an error message if the particle configuration is not defined in the matrix element library. These raw weights are not always useful for further processing, so a transformation function is provided that isolates the different linear and quadratic components the same way in normal EFT2Obs usage:
+
+```
+transformed_weights = rw.TransformWeights(weights)
+```
+
+Given the transformed weights, a new weight can be calculated for arbitrary coefficient values:
+
+```
+new_weight = rw.CalculateWeight(transformed_weights, cW=0.1, cHW=0.1)
+```
 
 ## Known limitations
 
