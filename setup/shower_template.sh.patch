@@ -1,0 +1,11 @@
+--- ../Template/NLO/MCatNLO/shower_template.sh	2019-10-16 13:39:36.000000001 +0200
++++ MCatNLO/shower_template.sh	2020-11-13 19:31:10.000000001 +0100
+@@ -7,7 +7,7 @@
+ RUN_NAME=$3
+ NFILE=$4
+ 
+-export %(ld_library_path)s=$%(ld_library_path)s:%(extralibs)s
++export %(ld_library_path)s=%(extralibs)s:$%(ld_library_path)s
+ 
+ if [ $SHOWER == "HERWIGPP" ] ; then
+     export PYTHIA8DATA=""

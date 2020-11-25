@@ -34,6 +34,7 @@ parser.add_argument('--save', default='json', help="Comma separated list of outp
 parser.add_argument('--translate-tex', default=None, help="json file to translate parameter names to latex")
 parser.add_argument('--translate-txt', default=None, help="json file to translate parameter names in the text file")
 parser.add_argument('--bin-labels', default=None, help="json file to translate bin labels")
+parser.add_argument('--nlo', action='store_true', help="Set if weights came from NLO reweighting")
 args = parser.parse_args()
 
 
@@ -74,7 +75,10 @@ n_hists = 1 + n_pars * 2 + (n_pars * n_pars - n_pars) / 2
 
 hists = []
 for i in xrange(n_hists):
-    hists.append(aos['%s[rw%.4i]' % (hname, i)])
+    if args.nlo:
+        hists.append(aos['%s[rw%.4i_nlo]' % (hname, i)])
+    else:
+        hists.append(aos['%s[rw%.4i]' % (hname, i)])
 
 # print hists
 is2D = isinstance(hists[0], yoda.Histo2D)
@@ -112,13 +116,18 @@ n_divider = 65
 def PrintEntry(label, val, err):
     print '%-20s | %12.4f | %12.4f | %12.4f' % (label, val, err, abs(err / val))
 
+if args.bin_labels is not None:
+    res["bin_labels"] = bin_labels[args.hist]
 
 for ib in xrange(nbins):
     terms = []
     sm = BinStats(hists[0].bins[ib])
     print '-' * n_divider
     print 'Bin %-4i numEntries: %-10i mean: %-10.3g stderr: %-10.3g' % (ib, hists[0].bins[ib].numEntries, sm[0], sm[1])
-    print '         edges: %s' % res['edges'][ib]
+    extra_label = ''
+    if args.bin_labels is not None:
+        extra_label += ', label=%s' % res["bin_labels"][ib]
+    print '         edges: %s%s' % (res['edges'][ib], extra_label)
     print '-' * n_divider
     if sm[0] == 0:
         res["bins"].append(terms)
@@ -161,9 +170,6 @@ for ib in xrange(nbins):
             continue
         filtered_terms.append(term)
     res["bins"].append(filtered_terms)
-
-if args.bin_labels is not None:
-    res["bin_labels"] = bin_labels[args.hist]
 
 if 'json' in save_formats:
     print '>> Saving histogram parametrisation to %s.json' % args.output

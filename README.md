@@ -74,7 +74,7 @@ The Madgraph-compatible models you wish to study should be installed next. Scrip
 
 ## Setup Rivet routines
 
-The Rivet routines which define the fiducial regions and obserbables of interest should be placed in the `EFT2Obs/RivetPlugins` directory. Two routines for the Higgs STXS are already provided: `HiggsTemplateCrossSectionsStage1` and `HiggsTemplateCrossSections`  which contain the stage 1 and 1.1 definitions respectively. Whenever new routines are added or existing ones modified they should be recompiled with:
+The Rivet routines which define the fiducial regions and obserbables of interest should be placed in the `EFT2Obs/RivetPlugins` directory. A routine for the Higgs STXS is already provided: `HiggsTemplateCrossSections`  which contain the stage 1.2 definitions. Whenever new routines are added or existing ones modified they should be recompiled with:
 
 ```sh
 ./scripts/setup_rivet_plugins.sh
@@ -87,6 +87,8 @@ The main steps for defining a process, generating events and extracting scaling 
 ![workflow](/resources/docs/EFT2Obs.jpeg)
 
 In this section for clarity we will follow a specific example, ZH production in the HEL model with the STXS Rivet routine, but the steps are generic and it should be straightforward to run with other processes or models.
+
+It is also possible to generate events at NLO in QCD and apply reweighting with an NLO-capable UFO model. In some places an alternative script must be used, and in others it is sufficient to add the `--nlo` flag to the usual script.
 
 ### Setup process
 
@@ -119,9 +121,18 @@ To initialise this process in Madgraph run
 
 which creates the directory `MG5_aMC_v2_6_7/zh-HEL`.
 
+For an NLO process (with `[QCD]` in the process definition), use the `setup_process_NLO.sh` script instead.
+
 ### Prepare Madgraph cards
 
-There are four further configuration cards that we need to specify: the `run_card.dat`, `pythia8_card.dat`, `param_card.dat` and `reweight_card.dat`. For the first two we can start from the default cards Madgraph created in the `MG5_aMC_v2_6_7/zh-HEL/Cards` directory. If these files do not already exist in our `cards/zh-HEL` directory then they will have been copied there in the `setup_process.sh` step above. If necessary edit these cards to set the desired values for the generation or showering parameters. In this example the cards have already been configured in the repository. *Note for CMS users: to emulate the Pythia configuration in official CMS sample production the lines in `resources/pythia8/cms_default_2018.dat` can be added to the `pythia8_card.cat`*.
+There are four further configuration cards that we need to specify: the `run_card.dat`, `pythia8_card.dat`, `param_card.dat` and `reweight_card.dat`. For NLO generation the `pythia8_card.dat` card is replaced by `shower_card.dat`. For the first two we can start from the default cards Madgraph created in the `MG5_aMC_v2_6_7/zh-HEL/Cards` directory. If these files do not already exist in our `cards/zh-HEL` directory then they will have been copied there in the `setup_process.sh` step above. If necessary edit these cards to set the desired values for the generation or showering parameters. In this example the cards have already been configured in the repository. *Note for CMS users: to emulate the Pythia configuration in official CMS sample production the lines in `resources/pythia8/cms_default_2018.dat` can be added to the `pythia8_card.cat`*.
+
+For NLO generation some care must be taken with the `run_card.dat`:
+
+ - The precision for the integration grids is controlled by `req_acc`. We recommend setting this to `0.001`, as recommended by the MG authors are typically used in official CMS production.
+ - Make sure `parton_shower` is set to `PYTHIA8`.
+ - To use Madgraph's NLO-correct reweighting, the `store_rwgt_info` flag must be set to true. For this information to be stored, one of `reweight_scale` or `reweight_PDF` must be set to true as well. We recommend `reweight_scale`, and setting both `rw_rscale` and `rw_fscale` to `1.0`.
+ - Check that `ickkw` is set appropriately if you will use FxFx merging.
 
 #### Config file
 
@@ -188,12 +199,19 @@ The reweight card specifies a set of parameter points that should be evaluated i
 python scripts/make_reweight_card.py config_HEL_STXS.json cards/zh-HEL/reweight_card.dat
 ```
 
+For NLO processes, an extra line should be added to the `reweight_card.dat` to select the NLO-correct reweighting mode (if desired):
+
+```sh
+python scripts/make_reweight_card.py config_HEL_STXS.json cards/zh-HEL/reweight_card.dat --prepend 'change mode NLO'
+```
+
 ### Make the gridpack
 
 To make the event generation more efficient and easier to run in parallel we first produce a gridpack for the process:
 
 ```sh
-./scripts/make_gridpack.sh zh-HEL
+./scripts/make_gridpack.sh zh-HEL # for LO
+./scripts/make_gridpack_NLO.sh zh-HEL  # for NLO
 ```
 
 Once complete the gridpack `gridpack_zh-HEL.tar.gz` will be copied to the main directory. The script can also produce a standalone version of the matrix-element code. This can be useful for reweighting events outside of the EFT2Obs tool. To produce this, add an additional flag:
@@ -202,7 +220,7 @@ Once complete the gridpack `gridpack_zh-HEL.tar.gz` will be copied to the main d
 ./scripts/make_gridpack.sh zh-HEL 1
 ```
 
-An addtional file, `rw_module_zh-HEL.tar.gz` is also produced. See the section below on standalone reweighting for more information.
+An addtional file, `rw_module_zh-HEL.tar.gz` is also produced. See the section below on standalone reweighting for more information. Note that standalone reweighting with NLO matrix elements is not currently possible.
 
 ### Event generation step
 
@@ -214,12 +232,13 @@ This is handled by `scripts/run_gridpack.py`, which runs through the LHE file ge
 export HIGGSPRODMODE=ZH
 python scripts/run_gridpack.py --gridpack gridpack_zh-HEL.tar.gz -s 1 -e 500 \
   -p HiggsTemplateCrossSectionsStage1,HiggsTemplateCrossSections \
-  -o test-zh
+  -o test-zh [--nlo]
 ```
 
 where the full set of options is:
 
  - `--gridpack [file]` relative or absolute path to the gridpack
+ - `--nlo` should be set if the input is an NLO gridpack
  - `-s X` the RNG seed which will be passed to Madgraph. This is also used to index the output files from the job, e.g. `Rivet_[X].yoda`.
  - `-e N` number of events per job, in this case 500.
  - `-p [RivetRoutine1],[RivetRoutine2],...` comma separated list of Rivet routines to run
@@ -265,7 +284,7 @@ yodamerge -o test-zh/Rivet.yoda test-zh/Rivet_*
 and then use the script `get_scaling.py` to extract the A_j and B_jk coefficents and their statistical uncertainties:
 
 ```sh
-python scripts/get_scaling.py -c config_HEL_STXS.json \
+python scripts/get_scaling.py -c config_HEL_STXS.json [--nlo] \
   -i test-zh/Rivet.yoda --hist "/HiggsTemplateCrossSections/pT_V" \
   --save json,txt,tex --translate-tex resources/translate_tex.json \
   --rebin 0,10,20,30,40,50,60,70,80,90,100,120,140,160,180,200,250,300,350,400
@@ -274,6 +293,7 @@ python scripts/get_scaling.py -c config_HEL_STXS.json \
 where the options are
 
  - `-c` the config file to use
+ - `--nlo` should be set if the output came from NLO reweighting
  - `-i` the yoda file input
  - `--hist` the histogram in the yoda file to parametrize, note that the leading "/" is important!
  - `--save [json,txt,tex]` a comma separated list of the output formats to save in
@@ -410,10 +430,9 @@ new_weight = rw.CalculateWeight(transformed_weights, cW=0.1, cHW=0.1)
 
 The following limitations currently apply. Links to GitHub issues indicate which are being actively worked on. Other issues or feature requests should also be reported there.
 
- - Processes are limited to one new-physics vertex (i.e. `NP <= 1` syntax required in the process definition). This is often acceptable when production and decay can be factorised, for example in the Higgs STXS, but is not a restriction we want to have in general.
- - NLO processes, and therefore models designed to operate on NLO processes are not supported. Conceptually there is not much difference to running on LO, however the technical side of the gridpack production and reweighting has to be tailored for NLO.
+ - Processes are limited to one new-physics vertex (i.e. `NP <= 1` syntax required in the process definition).
  - Some incompatibilities with the CMSSW environment have been reported. For now this should not be set when running EFT2Obs.
- - In future it will be possible to use a gridpack produced elsewhere as input to the event generation step. EFT2Obs will modify the gridpack to include reweighting with the model specified, which need not have been used when setting up the original process.
+
 
 
 

@@ -1,6 +1,7 @@
 import argparse
 import subprocess
 import os
+import sys
 
 parser = argparse.ArgumentParser()
 
@@ -17,6 +18,7 @@ parser.add_argument('--load-hepmc', type=str, default=None, help="Load hepmc fil
 parser.add_argument('--rivet-ignore-beams', action='store_true', help="Pass the --ignore-beams argument when running rivet, useful for simulating decay-only processes")
 parser.add_argument('--no-cleanup', action='store_true', help="Do not delete working directory at the end")
 parser.add_argument('--to-step', default='rivet', choices=['lhe', 'shower', 'rivet'], help="Terminate after this step")
+parser.add_argument('--nlo', action='store_true', help="Run on an NLO gridpack")
 
 args = parser.parse_args()
 
@@ -92,37 +94,51 @@ if load_hepmc is None:
     print '>> Untarring gridpack %s into %s' % (gridpack, gridpack_dir)
     subprocess.check_call(['tar', '-xf', gridpack, '-C', '%s/' % gridpack_dir])
 
+    # sys.exit(0)
     os.chdir(gridpack_dir)
     gp_dir = os.getcwd()
 
-    subprocess.check_call(['mkdir', '-p', 'madevent/Events/GridRun'])
+    if not args.nlo:
+        subprocess.check_call(['mkdir', '-p', 'madevent/Events/GridRun'])
 
     if load_lhe is None:
         subprocess.check_call(['./run.sh', '%i' % events, '%i' % seed])
-        subprocess.check_call(['mv', 'events.lhe.gz', 'madevent/Events/GridRun/unweighted_events.lhe.gz'])
-        os.chdir('madevent')
-        subprocess.check_call('echo "0" | ./bin/madevent --debug reweight GridRun', shell=True)
-        os.chdir(gp_dir)
+        if not args.nlo:
+            subprocess.check_call(['mv', 'events.lhe.gz', 'madevent/Events/GridRun/unweighted_events.lhe.gz'])
+            os.chdir('madevent')
+            subprocess.check_call('echo "0" | ./bin/madevent --debug reweight GridRun', shell=True)
+            os.chdir(gp_dir)
     else:
-        subprocess.check_call(['cp', '%s/events_%i.lhe.gz' % (load_lhe, seed), 'madevent/Events/GridRun/unweighted_events.lhe.gz'])
+        if args.nlo:
+            subprocess.check_call(['cp', '%s/events_%i.lhe.gz' % (load_lhe, seed), 'madevent/Events/GridRun/unweighted_events.lhe.gz'])
+        else:
+            subprocess.check_call(['cp', '%s/events_%i.lhe.gz' % (load_lhe, seed), 'Events/GridRun/events.lhe.gz'])
 
     if save_lhe is not None:
         subprocess.check_call(['mkdir', '-p', save_lhe])
-        subprocess.check_call(['cp', 'madevent/Events/GridRun/unweighted_events.lhe.gz', '%s/events_%i.lhe.gz' % (save_lhe, seed)])
+        if args.nlo:
+            subprocess.check_call(['cp', 'Events/GridRun/events.lhe.gz', '%s/events_%i.lhe.gz' % (save_lhe, seed)])
+        else:
+            subprocess.check_call(['cp', 'madevent/Events/GridRun/events.lhe.gz', '%s/events_%i.lhe.gz' % (save_lhe, seed)])
 
     if args.to_step == 'lhe':
         finished = True
 
+    # For NLO we have already run the shower
     if not finished:
-        os.chdir('madevent')
-        lines = ['pythia8']
-        if save_hepmc is None:
-            lines.append('set HEPMCoutput:file fifo@%s/events_%i.hepmc' % (tmpdir, seed))
+        if args.nlo:
+            subprocess.check_call(['cp', 'Events/GridRun/events_PYTHIA8_0.hepmc.gz', '%s/events_%i.hepmc.gz' % (tmpdir, seed)])
+            subprocess.check_call(['gunzip', '%s/events_%i.hepmc.gz' % (tmpdir, seed)])
         else:
-            lines.append('set HEPMCoutput:file %s/events_%i.hepmc' % (tmpdir, seed))
-        with open('mgrunscript', "w") as text_file:
-            text_file.write('\n'.join(lines))
-        subprocess.check_call('./bin/madevent --debug shower GridRun < mgrunscript', shell=True)
+            os.chdir('madevent')
+            lines = ['pythia8']
+            if save_hepmc is None:
+                lines.append('set HEPMCoutput:file fifo@%s/events_%i.hepmc' % (tmpdir, seed))
+            else:
+                lines.append('set HEPMCoutput:file %s/events_%i.hepmc' % (tmpdir, seed))
+            with open('mgrunscript', "w") as text_file:
+                text_file.write('\n'.join(lines))
+            subprocess.check_call('./bin/madevent --debug shower GridRun < mgrunscript', shell=True)
 else:
     subprocess.check_call(['cp', '%s/events_%i.hepmc.gz' % (load_hepmc, seed), '%s/events_%i.hepmc.gz' % (tmpdir, seed)])
     subprocess.check_call(['gunzip', '%s/events_%i.hepmc.gz' % (tmpdir, seed)])
@@ -145,4 +161,4 @@ else:
     os.remove('%s/events_%i.hepmc' % (tmpdir, seed))
 
 if not args.no_cleanup and load_hepmc is None:
-    subprocess.check_call(['rm', '-r', gridpack_dir])
+    subprocess.check_call(['rm', '-rf', gridpack_dir])

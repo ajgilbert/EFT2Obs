@@ -36,11 +36,11 @@ for block in cfg['blocks']:
         par.value = cfg['inactive']['default_val']
 
 for p in cfg['parameters']:
-    par = param_card[block].param_dict[(p['index'],)]
+    par = param_card[p['block']].param_dict[(p['index'],)]
     par.value = p['gen']
 
 for p in cfg['inactive']['parameters']:
-    par = param_card[block].param_dict[(p['index'],)]
+    par = param_card[p['block']].param_dict[(p['index'],)]
     par.value = p['val']
 
 
