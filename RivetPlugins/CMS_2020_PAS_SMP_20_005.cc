@@ -104,6 +104,8 @@ void CMS_2020_PAS_SMP_20_005::init() {
 
   // Booking of histograms
   std::vector<double> eft_pt_binning = {150., 200., 300., 500., 800., 1200.};
+  std::vector<double> eft_pt_binning_alt1 = {150., 200., 300., 500., 800., 1500.};
+  std::vector<double> eft_pt_binning_alt2 = {150., 200., 300., 500., 900., 1500.};
   std::vector<double> eft_phi_binning = {0., PI / 6., PI / 3., PI / 2.};
   book(_h["baseline_photon_pt"], "baseline_photon_pt", std::vector<double>{30., 50., 70., 100., 150., 200., 300., 500., 800., 1200.});
   // book(_h2d["eft_main_p_photon_pt_phi"], "eft_main_p_photon_pt_phi", eft_pt_binning, eft_phi_binning);
@@ -123,7 +125,9 @@ void CMS_2020_PAS_SMP_20_005::init() {
   book(_h2d["baseline_main_x_photon_pt_phi_jveto"], "baseline_main_x_photon_pt_phi_jveto", eft_pt_binning, eft_phi_binning);
   book(_h2d["baseline_met1_x_photon_pt_phi"], "baseline_met1_x_photon_pt_phi", eft_pt_binning, eft_phi_binning);
   book(_h2d["baseline_met1_x_photon_pt_phi_jveto"], "baseline_met1_x_photon_pt_phi_jveto", eft_pt_binning, eft_phi_binning);
-
+  book(_h2d["baseline_main_x_photon_pt_phi_jveto_alt1"], "baseline_main_x_photon_pt_phi_jveto_alt1", eft_pt_binning_alt1, eft_phi_binning);
+  book(_h2d["baseline_met1_x_photon_pt_phi_jveto_alt1"], "baseline_met1_x_photon_pt_phi_jveto_alt1", eft_pt_binning_alt1, eft_phi_binning);
+  book(_h2d["baseline_main_x_photon_pt_phi_jveto_alt2"], "baseline_main_x_photon_pt_phi_jveto_alt2", eft_pt_binning_alt2, eft_phi_binning);  book(_h2d["baseline_met1_x_photon_pt_phi_jveto_alt2"], "baseline_met1_x_photon_pt_phi_jveto_alt2", eft_pt_binning_alt2, eft_phi_binning);
 }
 
 /// Perform the per-event analysis
@@ -261,6 +265,8 @@ void CMS_2020_PAS_SMP_20_005::analyze(const Event& event) {
         _h2d["baseline_met1_x_photon_pt_phi"]->fill(vars_.p0_pt / GeV, vars_.true_phi_f);
         if (vars_.n_jets == 0) {
           _h2d["baseline_met1_x_photon_pt_phi_jveto"]->fill(vars_.p0_pt / GeV, vars_.true_phi_f);
+          _h2d["baseline_met1_x_photon_pt_phi_jveto_alt1"]->fill(vars_.p0_pt / GeV, vars_.true_phi_f);
+          _h2d["baseline_met1_x_photon_pt_phi_jveto_alt2"]->fill(vars_.p0_pt / GeV, vars_.true_phi_f);
         }
       }
 
@@ -268,6 +274,8 @@ void CMS_2020_PAS_SMP_20_005::analyze(const Event& event) {
         _h2d["baseline_main_x_photon_pt_phi"]->fill(vars_.p0_pt / GeV, vars_.true_phi_f);
         if (vars_.n_jets == 0) {
           _h2d["baseline_main_x_photon_pt_phi_jveto"]->fill(vars_.p0_pt / GeV, vars_.true_phi_f);
+          _h2d["baseline_main_x_photon_pt_phi_jveto_alt1"]->fill(vars_.p0_pt / GeV, vars_.true_phi_f);
+          _h2d["baseline_main_x_photon_pt_phi_jveto_alt2"]->fill(vars_.p0_pt / GeV, vars_.true_phi_f);
         }
       }
     }
@@ -321,7 +329,11 @@ void CMS_2020_PAS_SMP_20_005::finalize() {
         "baseline_main_x_photon_pt_phi",
         "baseline_main_x_photon_pt_phi_jveto",
         "baseline_met1_x_photon_pt_phi",
-        "baseline_met1_x_photon_pt_phi_jveto"
+        "baseline_met1_x_photon_pt_phi_jveto",
+        "baseline_main_x_photon_pt_phi_jveto_alt1",
+        "baseline_met1_x_photon_pt_phi_jveto_alt1",
+        "baseline_main_x_photon_pt_phi_jveto_alt2",
+        "baseline_met1_x_photon_pt_phi_jveto_alt2"
       }) {
     scale(_h2d[x], crossSection() / picobarn / sumOfWeights());
   }
