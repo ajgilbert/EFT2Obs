@@ -1,0 +1,11 @@
+--- MG5_aMC_v2_6_7/madgraph/interface/master_interface.py	2019-10-16 13:39:36.000000001 +0200
++++ EFT2Obs/MG5_aMC_v2_6_7/madgraph/interface/master_interface.py	2020-11-18 11:52:44.000000001 +0100
+@@ -215,6 +215,8 @@
+                 elif nlo_mode in ['virt', 'sqrvirt']:
+                     self.change_principal_cmd('MadLoop', allow_switch)
+                 elif nlo_mode == 'noborn': 
++                    if self.current_interface == "MadGraph":
++                        allow_switch = True
+                     self.change_principal_cmd('MadLoop', allow_switch)
+                     self.cmd.validate_model(self, loop_type=nlo_mode,
+                                                             coupling_type=orders)

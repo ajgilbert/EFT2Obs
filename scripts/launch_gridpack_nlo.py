@@ -6,7 +6,6 @@ job_mgr = Jobs()
 parser = argparse.ArgumentParser()
 
 parser.add_argument('-c', '--cores', default=1, type=int, help="Number of cores")
-parser.add_argument('--export', default=0, type=int, help="Export the standalone module")
 parser.add_argument('task', type=str, help="Directory to run")
 
 job_mgr.attach_job_args(parser)
@@ -14,6 +13,6 @@ job_mgr.attach_job_args(parser)
 job_mgr.set_args(args)
 
 iwd = os.environ['PWD']
-cmd = 'cd %s; ./scripts/make_gridpack.sh %s %s %i' % (iwd, args.task, args.export, args.cores)
+cmd = 'cd %s; ./scripts/make_gridpack_nlo.sh %s %i' % (iwd, args.task, args.cores)
 job_mgr.job_queue.append(cmd)
 job_mgr.flush_queue()

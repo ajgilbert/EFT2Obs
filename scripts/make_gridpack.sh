@@ -46,11 +46,16 @@ pushd "gridpack_${PROCESS}"
 	mkdir -p madevent/Events/${RUNLABEL}
 	cp ../Events/${RUNLABEL}/unweighted_events.lhe.gz madevent/Events/${RUNLABEL}
 	pushd madevent
+		# Don't want to do the full reweighting now, just get the code compiled
+		# We make a dummy card by truncating the real one from the first line
+		# that starts with "launch"
 		cp Cards/.reweight_card.dat Cards/reweight_card.dat.backup
-		{
-			echo "change rwgt_dir rwgt"
-			echo "launch"
-		} > Cards/reweight_card.dat
+		sed -n '/^launch/q;p' Cards/reweight_card.dat.backup > Cards/reweight_card.dat
+		echo "launch" >> Cards/reweight_card.dat
+		# {
+		# 	echo "change rwgt_dir rwgt"
+		# 	echo "launch"
+		# } > Cards/reweight_card.dat
 		echo "0" | ./bin/madevent --debug reweight pilotrun
 		cp Cards/reweight_card.dat.backup Cards/reweight_card.dat
 		if [ "$EXPORTRW" -eq "1" ]; then

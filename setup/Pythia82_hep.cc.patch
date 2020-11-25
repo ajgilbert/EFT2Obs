@@ -1,0 +1,38 @@
+--- Pythia8_hep.cc.orig	2020-11-16 11:58:04.000000001 +0100
++++ Pythia82_hep.cc	2020-11-24 10:59:35.000000001 +0100
+@@ -4,6 +4,7 @@
+ #include "Pythia8Plugins/HepMC2.h"
+ #include "Pythia8Plugins/aMCatNLOHooks.h"
+ #include "Pythia8Plugins/CombineMatchingInput.h"
++#include "Pythia8Plugins/WeightCorrector.h"
+ #include "HepMC/GenEvent.h"
+ #include "HepMC/IO_GenEvent.h"
+ 
+@@ -89,7 +90,26 @@
+       normhepmc = double(iEventtot) / double(iEventshower);
+     }
+     sigmaTotal += evtweight*normhepmc;
+-    hepmcevt->weights().push_back(evtweight*normhepmc);
++    hepmcevt->weights().push_back(evtweight*normhepmc, "nominal");
++    // Loop through weightgroups.
++    for ( std::map<std::string,LHAweightgroup>::const_iterator
++      it_wg = pythia.info.weightgroups->begin();
++      it_wg != pythia.info.weightgroups->end(); ++it_wg ) {
++      // Loop through weights in the weightgroup.
++      for ( std::map<std::string,LHAweight>::const_iterator
++        it_w = it_wg->second.weights.begin();
++        it_w != it_wg->second.weights.end(); ++it_w ) {
++        // Get value of weight indexed by the present key.
++        std::map<std::string,double>::const_iterator it_value
++          = pythia.info.weights_detailed->find(it_w->first);
++        double w = it_value->second; //*merging_weight*vetoWeights[iCut];
++        if (it_w->first.rfind("rw", 0) != 0) continue;
++        hepmcevt->weights().push_back(w*normhepmc, it_w->first);
++
++      } // Done looping through weights.
++    } // Done looping through weight groups.
++    CorrectWeights(hepmcevt->weights());
++
+     ToHepMC.fill_next_event( pythia, hepmcevt );
+     // Add the weight of the current event to the cross section.
+     // Report cross section to hepmc

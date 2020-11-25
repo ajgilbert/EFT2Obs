@@ -8,5 +8,9 @@
   "chb": "c_{HB}",
   "ca": "c_{A}",
   "cg": "c_{g}",
-  "c3w": "c_{3W}"
+  "c3w": "c_{3W}",
+  "cwwwl2": "c_{WWW}/#Lambda^{2}",
+  "cpg": "c_{#phig}",
+  "ctg": "c_{tg}",
+  "ctp": "c_{t#phi}"
 }
