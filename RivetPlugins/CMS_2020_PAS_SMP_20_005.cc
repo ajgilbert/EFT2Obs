@@ -53,6 +53,7 @@ void CMS_2020_PAS_SMP_20_005::init() {
   vars_.resetVars();
 
   FinalState fs;
+  declare(fs, "FinalState");
 
   // Jets - all final state particles excluding neutrinos
   VetoedFinalState vfs;
@@ -103,31 +104,22 @@ void CMS_2020_PAS_SMP_20_005::init() {
   declare(MissingMomentum(fs), "MET");
 
   // Booking of histograms
-  std::vector<double> eft_pt_binning = {150., 200., 300., 500., 800., 1200.};
-  std::vector<double> eft_pt_binning_alt1 = {150., 200., 300., 500., 800., 1500.};
-  std::vector<double> eft_pt_binning_alt2 = {150., 200., 300., 500., 900., 1500.};
+  std::vector<double> eft_pt_binning = {150., 200., 300., 500., 800., 1500.};
+  std::vector<double> eft_pt_binning_reint = {150., 200., 300., 500., 1500.};
   std::vector<double> eft_phi_binning = {0., PI / 6., PI / 3., PI / 2.};
-  book(_h["baseline_photon_pt"], "baseline_photon_pt", std::vector<double>{30., 50., 70., 100., 150., 200., 300., 500., 800., 1200.});
-  // book(_h2d["eft_main_p_photon_pt_phi"], "eft_main_p_photon_pt_phi", eft_pt_binning, eft_phi_binning);
-  // book(_h2d["eft_main_n_photon_pt_phi"], "eft_main_n_photon_pt_phi", eft_pt_binning, eft_phi_binning);
-  book(_h2d["eft_main_x_photon_pt_phi"], "eft_main_x_photon_pt_phi", eft_pt_binning, eft_phi_binning);
-  // book(_h2d["eft_main_p_photon_pt_phi_jveto"], "eft_main_p_photon_pt_phi_jveto", eft_pt_binning, eft_phi_binning);
-  // book(_h2d["eft_main_n_photon_pt_phi_jveto"], "eft_main_n_photon_pt_phi_jveto", eft_pt_binning, eft_phi_binning);
-  book(_h2d["eft_main_x_photon_pt_phi_jveto"], "eft_main_x_photon_pt_phi_jveto", eft_pt_binning, eft_phi_binning);
-  // book(_h2d["eft_met1_p_photon_pt_phi"], "eft_met1_p_photon_pt_phi", eft_pt_binning, eft_phi_binning);
-  // book(_h2d["eft_met1_n_photon_pt_phi"], "eft_met1_n_photon_pt_phi", eft_pt_binning, eft_phi_binning);
-  book(_h2d["eft_met1_x_photon_pt_phi"], "eft_met1_x_photon_pt_phi", eft_pt_binning, eft_phi_binning);
-  // book(_h2d["eft_met1_p_photon_pt_phi_jveto"], "eft_met1_p_photon_pt_phi_jveto", eft_pt_binning, eft_phi_binning);
-  // book(_h2d["eft_met1_n_photon_pt_phi_jveto"], "eft_met1_n_photon_pt_phi_jveto", eft_pt_binning, eft_phi_binning);
-  book(_h2d["eft_met1_x_photon_pt_phi_jveto"], "eft_met1_x_photon_pt_phi_jveto", eft_pt_binning, eft_phi_binning);
+  book(_h["baseline_photon_pt"], "baseline_photon_pt", std::vector<double>{30., 50., 70., 100., 150., 200., 300., 500., 800., 1500.});
 
-  book(_h2d["baseline_main_x_photon_pt_phi"], "baseline_main_x_photon_pt_phi", eft_pt_binning, eft_phi_binning);
+  // book(_h2d["eft_main_x_photon_pt_phi"], "eft_main_x_photon_pt_phi", eft_pt_binning, eft_phi_binning);
+  // book(_h2d["eft_main_x_photon_pt_phi_jveto"], "eft_main_x_photon_pt_phi_jveto", eft_pt_binning, eft_phi_binning);
+  // book(_h2d["eft_met1_x_photon_pt_phi"], "eft_met1_x_photon_pt_phi", eft_pt_binning, eft_phi_binning);
+  // book(_h2d["eft_met1_x_photon_pt_phi_jveto"], "eft_met1_x_photon_pt_phi_jveto", eft_pt_binning, eft_phi_binning);
+
+  // book(_h2d["baseline_main_x_photon_pt_phi"], "baseline_main_x_photon_pt_phi", eft_pt_binning, eft_phi_binning);
   book(_h2d["baseline_main_x_photon_pt_phi_jveto"], "baseline_main_x_photon_pt_phi_jveto", eft_pt_binning, eft_phi_binning);
-  book(_h2d["baseline_met1_x_photon_pt_phi"], "baseline_met1_x_photon_pt_phi", eft_pt_binning, eft_phi_binning);
+  book(_h2d["baseline_main_x_photon_pt_phi_jveto_reint"], "baseline_main_x_photon_pt_phi_jveto_reint", eft_pt_binning_reint, eft_phi_binning);
+  // book(_h2d["baseline_met1_x_photon_pt_phi"], "baseline_met1_x_photon_pt_phi", eft_pt_binning, eft_phi_binning);
   book(_h2d["baseline_met1_x_photon_pt_phi_jveto"], "baseline_met1_x_photon_pt_phi_jveto", eft_pt_binning, eft_phi_binning);
-  book(_h2d["baseline_main_x_photon_pt_phi_jveto_alt1"], "baseline_main_x_photon_pt_phi_jveto_alt1", eft_pt_binning_alt1, eft_phi_binning);
-  book(_h2d["baseline_met1_x_photon_pt_phi_jveto_alt1"], "baseline_met1_x_photon_pt_phi_jveto_alt1", eft_pt_binning_alt1, eft_phi_binning);
-  book(_h2d["baseline_main_x_photon_pt_phi_jveto_alt2"], "baseline_main_x_photon_pt_phi_jveto_alt2", eft_pt_binning_alt2, eft_phi_binning);  book(_h2d["baseline_met1_x_photon_pt_phi_jveto_alt2"], "baseline_met1_x_photon_pt_phi_jveto_alt2", eft_pt_binning_alt2, eft_phi_binning);
+
 }
 
 /// Perform the per-event analysis
@@ -198,6 +190,21 @@ void CMS_2020_PAS_SMP_20_005::analyze(const Event& event) {
 
     vars_.n_jets = jets.size();
 
+    // Here we build a list of particles to cluser "parton-like" jets, to
+    // be used in the photon isolation.
+    Particles finalparts_iso = applyProjection<FinalState>(event, "FinalState").particles();
+    Particles filtered_iso;
+    for (Particle const& p : finalparts_iso) {
+      if (p.genParticle() == l0.genParticle() || p.genParticle() == p0.genParticle() || p.genParticle() == n0.genParticle() || p.fromTau()) {
+        continue;
+      }
+      filtered_iso.push_back(p);
+    }
+    auto proj = getProjection<FastJets>("Jets");
+    proj.reset();
+    proj.calc(filtered_iso);
+    auto jets_iso = proj.jets();
+
     vars_.p0_frixione = true;
     double frixione_sum = 0.;
     // Apply Frixione isolation to the photon:
@@ -211,14 +218,31 @@ void CMS_2020_PAS_SMP_20_005::analyze(const Event& event) {
                                              return deltaR(part1, p0) < deltaR(part2, p0);
                                            });
     }
-    for (auto const& ip : parts) {
-      double dr = deltaR(ip, p0);
-      if (dr >= photon_iso_dr_) {
-        break;
+    auto jparts = sortBy(jets_iso, [&](Jet const& part1, Jet const& part2) {
+                                             return deltaR(part1, p0) < deltaR(part2, p0);
+                                           });
+
+    if (use_parton_isolation_ || (!use_jet_isolation_)) {
+      for (auto const& ip : parts) {
+        double dr = deltaR(ip, p0);
+        if (dr >= photon_iso_dr_) {
+          break;
+        }
+        frixione_sum += ip.pt();
+        if (frixione_sum > (p0.pt() * ((1. - std::cos(dr)) / (1. - std::cos(photon_iso_dr_))))) {
+          vars_.p0_frixione = false;
+        }
       }
-      frixione_sum += ip.pt();
-      if (frixione_sum > (p0.pt() * ((1. - std::cos(dr)) / (1. - std::cos(photon_iso_dr_))))) {
-        vars_.p0_frixione = false;
+    } else {
+      for (auto const& ip : jparts) {
+        double dr = deltaR(ip, p0);
+        if (dr >= photon_iso_dr_) {
+          break;
+        }
+        frixione_sum += ip.pt();
+        if (frixione_sum > (p0.pt() * ((1. - std::cos(dr)) / (1. - std::cos(photon_iso_dr_))))) {
+          vars_.p0_frixione = false;
+        }
       }
     }
 
@@ -257,54 +281,50 @@ void CMS_2020_PAS_SMP_20_005::analyze(const Event& event) {
 
 
 
-    if (vars_.l0_pt > lepton_pt_cut_ && std::abs(vars_.l0_eta) < lepton_abs_eta_cut_ &&
+    if (vars_.l0_pt > eft_lepton_pt_cut_ && std::abs(vars_.l0_eta) < lepton_abs_eta_cut_ &&
         vars_.p0_pt > photon_pt_cut_ && std::abs(vars_.p0_eta) < photon_abs_eta_cut_ && vars_.p0_frixione &&
         vars_.l0p0_dr > lepton_photon_dr_cut_ && vars_.met_pt > 0.) {
 
       if (vars_.met_pt <= missing_pt_cut_) {
-        _h2d["baseline_met1_x_photon_pt_phi"]->fill(vars_.p0_pt / GeV, vars_.true_phi_f);
+        // _h2d["baseline_met1_x_photon_pt_phi"]->fill(vars_.p0_pt / GeV, vars_.true_phi_f);
         if (vars_.n_jets == 0) {
           _h2d["baseline_met1_x_photon_pt_phi_jveto"]->fill(vars_.p0_pt / GeV, vars_.true_phi_f);
-          _h2d["baseline_met1_x_photon_pt_phi_jveto_alt1"]->fill(vars_.p0_pt / GeV, vars_.true_phi_f);
-          _h2d["baseline_met1_x_photon_pt_phi_jveto_alt2"]->fill(vars_.p0_pt / GeV, vars_.true_phi_f);
         }
       }
 
       if (vars_.met_pt > missing_pt_cut_) {
-        _h2d["baseline_main_x_photon_pt_phi"]->fill(vars_.p0_pt / GeV, vars_.true_phi_f);
+        // _h2d["baseline_main_x_photon_pt_phi"]->fill(vars_.p0_pt / GeV, vars_.true_phi_f);
         if (vars_.n_jets == 0) {
           _h2d["baseline_main_x_photon_pt_phi_jveto"]->fill(vars_.p0_pt / GeV, vars_.true_phi_f);
-          _h2d["baseline_main_x_photon_pt_phi_jveto_alt1"]->fill(vars_.p0_pt / GeV, vars_.true_phi_f);
-          _h2d["baseline_main_x_photon_pt_phi_jveto_alt2"]->fill(vars_.p0_pt / GeV, vars_.true_phi_f);
+          _h2d["baseline_main_x_photon_pt_phi_jveto_reint"]->fill(vars_.p0_pt / GeV, vars_.true_phi_f);
         }
       }
     }
 
-    if (vars_.l0_pt > eft_lepton_pt_cut_ && std::abs(vars_.l0_eta) < lepton_abs_eta_cut_ &&
-        vars_.p0_pt > eft_photon_pt_cut_ && std::abs(vars_.p0_eta) < photon_abs_eta_cut_ && vars_.p0_frixione &&
-        vars_.l0p0_dr > eft_lepton_photon_dr_cut_ && vars_.met_pt > eft_missing_pt_met1_cut_) {
+    // if (vars_.l0_pt > eft_lepton_pt_cut_ && std::abs(vars_.l0_eta) < lepton_abs_eta_cut_ &&
+    //     vars_.p0_pt > eft_photon_pt_cut_ && std::abs(vars_.p0_eta) < photon_abs_eta_cut_ && vars_.p0_frixione &&
+    //     vars_.l0p0_dr > eft_lepton_photon_dr_cut_ && vars_.met_pt > eft_missing_pt_met1_cut_) {
 
-      // std::string chg = vars_.l0_q == +1 ? "p" : "n";
+    //   // std::string chg = vars_.l0_q == +1 ? "p" : "n";
 
-      if (vars_.met_pt <= eft_missing_pt_cut_) {
-        // _h2d["eft_met1_" + chg + "_photon_pt_phi"]->fill(vars_.p0_pt / GeV, vars_.true_phi_f);
-        _h2d["eft_met1_x_photon_pt_phi"]->fill(vars_.p0_pt / GeV, vars_.true_phi_f);
-        if (vars_.n_jets == 0) {
-          // _h2d["eft_met1_" + chg + "_photon_pt_phi_jveto"]->fill(vars_.p0_pt / GeV, vars_.true_phi_f);
-          _h2d["eft_met1_x_photon_pt_phi_jveto"]->fill(vars_.p0_pt / GeV, vars_.true_phi_f);
-        }
-      }
+    //   if (vars_.met_pt <= eft_missing_pt_cut_) {
+    //     // _h2d["eft_met1_" + chg + "_photon_pt_phi"]->fill(vars_.p0_pt / GeV, vars_.true_phi_f);
+    //     _h2d["eft_met1_x_photon_pt_phi"]->fill(vars_.p0_pt / GeV, vars_.true_phi_f);
+    //     if (vars_.n_jets == 0) {
+    //       // _h2d["eft_met1_" + chg + "_photon_pt_phi_jveto"]->fill(vars_.p0_pt / GeV, vars_.true_phi_f);
+    //       _h2d["eft_met1_x_photon_pt_phi_jveto"]->fill(vars_.p0_pt / GeV, vars_.true_phi_f);
+    //     }
+    //   }
 
-      if (vars_.met_pt > eft_missing_pt_cut_) {
-        // _h2d["eft_main_" + chg + "_photon_pt_phi"]->fill(vars_.p0_pt / GeV, vars_.true_phi_f);
-        _h2d["eft_main_x_photon_pt_phi"]->fill(vars_.p0_pt / GeV, vars_.true_phi_f);
-        if (vars_.n_jets == 0) {
-          // _h2d["eft_main_" + chg + "_photon_pt_phi_jveto"]->fill(vars_.p0_pt / GeV, vars_.true_phi_f);
-          _h2d["eft_main_x_photon_pt_phi_jveto"]->fill(vars_.p0_pt / GeV, vars_.true_phi_f);
-        }
-      }
-
-    }
+    //   if (vars_.met_pt > eft_missing_pt_cut_) {
+    //     // _h2d["eft_main_" + chg + "_photon_pt_phi"]->fill(vars_.p0_pt / GeV, vars_.true_phi_f);
+    //     _h2d["eft_main_x_photon_pt_phi"]->fill(vars_.p0_pt / GeV, vars_.true_phi_f);
+    //     if (vars_.n_jets == 0) {
+    //       // _h2d["eft_main_" + chg + "_photon_pt_phi_jveto"]->fill(vars_.p0_pt / GeV, vars_.true_phi_f);
+    //       _h2d["eft_main_x_photon_pt_phi_jveto"]->fill(vars_.p0_pt / GeV, vars_.true_phi_f);
+    //     }
+    //   }
+    // }
   }
 }
 
@@ -314,26 +334,15 @@ void CMS_2020_PAS_SMP_20_005::finalize() {
   scale(_h["baseline_photon_pt"], crossSection() / picobarn / sumOfWeights());
   for (std::string const& x :
        {
-        // "eft_main_p_photon_pt_phi",
-        // "eft_main_n_photon_pt_phi",
-        "eft_main_x_photon_pt_phi",
-        // "eft_main_p_photon_pt_phi_jveto",
-        // "eft_main_n_photon_pt_phi_jveto",
-        "eft_main_x_photon_pt_phi_jveto",
-        // "eft_met1_p_photon_pt_phi",
-        // "eft_met1_n_photon_pt_phi",
-        "eft_met1_x_photon_pt_phi",
-        // "eft_met1_p_photon_pt_phi_jveto",
-        // "eft_met1_n_photon_pt_phi_jveto",
-        "eft_met1_x_photon_pt_phi_jveto",
-        "baseline_main_x_photon_pt_phi",
+        // "eft_main_x_photon_pt_phi",
+        // "eft_main_x_photon_pt_phi_jveto",
+        // "eft_met1_x_photon_pt_phi",
+        // "eft_met1_x_photon_pt_phi_jveto",
+        // "baseline_main_x_photon_pt_phi",
         "baseline_main_x_photon_pt_phi_jveto",
-        "baseline_met1_x_photon_pt_phi",
-        "baseline_met1_x_photon_pt_phi_jveto",
-        "baseline_main_x_photon_pt_phi_jveto_alt1",
-        "baseline_met1_x_photon_pt_phi_jveto_alt1",
-        "baseline_main_x_photon_pt_phi_jveto_alt2",
-        "baseline_met1_x_photon_pt_phi_jveto_alt2"
+        "baseline_main_x_photon_pt_phi_jveto_reint",
+        // "baseline_met1_x_photon_pt_phi",
+        "baseline_met1_x_photon_pt_phi_jveto"
       }) {
     scale(_h2d[x], crossSection() / picobarn / sumOfWeights());
   }

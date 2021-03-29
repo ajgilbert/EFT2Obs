@@ -81,6 +81,7 @@ class CMS_2020_PAS_SMP_20_005 : public Analysis {
 
   bool use_dressed_leptons_ = true;
   bool use_parton_isolation_ = false;
+  bool use_jet_isolation_ = true;
   double photon_iso_dr_ = 0.4;
   double lepton_pt_cut_ = 30.;
   double lepton_abs_eta_cut_ = 2.5;
