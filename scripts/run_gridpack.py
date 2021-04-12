@@ -119,7 +119,7 @@ if load_hepmc is None:
         if args.nlo:
             subprocess.check_call(['cp', 'Events/GridRun/events.lhe.gz', '%s/events_%i.lhe.gz' % (save_lhe, seed)])
         else:
-            subprocess.check_call(['cp', 'madevent/Events/GridRun/events.lhe.gz', '%s/events_%i.lhe.gz' % (save_lhe, seed)])
+            subprocess.check_call(['cp', 'madevent/Events/GridRun/unweighted_events.lhe.gz', '%s/events_%i.lhe.gz' % (save_lhe, seed)])
 
     if args.to_step == 'lhe':
         finished = True
