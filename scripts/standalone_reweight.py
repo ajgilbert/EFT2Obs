@@ -24,7 +24,7 @@ def GetConfigFile(filename):
 class StandaloneReweight:
 
     def __init__(self, rw_pack):
-        self.mode = 1
+        self.mode = 0
         self.references = {}
         self.caches = {}
         self.tocache = ['couplings', 'weak', 'rscale', 'strong', 'masses', 'widths']
@@ -77,6 +77,7 @@ class StandaloneReweight:
         self.mods = []
 
         if self.mode == 0:
+            """
             if not os.path.isdir(os.path.join(subproc_dir, 'rwdir_0')):
                 os.chdir(subproc_dir)
                 for i in xrange(self.N):
@@ -85,7 +86,15 @@ class StandaloneReweight:
                 os.chdir(iwd)
             else:
                 print '>> Reusing working directory %s' % self.target_dir
-
+            """
+            os.chdir(subproc_dir)
+            for i in range(self.N):
+                try:
+                    os.mkdir('rwdir_%i' % i)
+                except:
+                    pass
+                subprocess.check_call(['cp', 'allmatrix2py.so', 'rwdir_%i/allmatrix2py.so' % i])
+            os.chdir(iwd)
 
             os.chdir(subproc_dir)
 
