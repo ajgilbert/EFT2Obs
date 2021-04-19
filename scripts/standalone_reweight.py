@@ -21,6 +21,33 @@ def GetConfigFile(filename):
                 p[k] = cfg['parameter_defaults'][k]
     return cfg
 
+import contextlib
+#from MadGraph misc.py, useful for supressing output
+@contextlib.contextmanager
+def stdchannel_redirected(stdchannel, dest_filename):
+    """                                                                                                                                                                                                     
+    A context manager to temporarily redirect stdout or stderr                                                                                                                                              
+                                                                                                                                                                                                            
+    e.g.:                                                                                                                                                                                                   
+                                                                                                                                                                                                            
+                                                                                                                                                                                                            
+    with stdchannel_redirected(sys.stderr, os.devnull):                                                                                                                                                     
+        if compiler.has_function('clock_gettime', libraries=['rt']):                                                                                                                                        
+            libraries.append('rt')                                                                                                                                                                          
+    """
+
+    try:
+        oldstdchannel = os.dup(stdchannel.fileno())
+        dest_file = open(dest_filename, 'w')
+        os.dup2(dest_file.fileno(), stdchannel.fileno())
+        yield
+    finally:
+        if oldstdchannel is not None:
+            os.dup2(oldstdchannel, stdchannel.fileno())
+            os.close(oldstdchannel)
+        if dest_file is not None:
+            dest_file.close()
+
 
 class StandaloneReweight:
 
@@ -41,6 +68,12 @@ class StandaloneReweight:
         self.N = 1 + self.Npars * 2 + (self.Npars * self.Npars - self.Npars) / 2
 
         print '>> %i parameters, %i reweight points' % (self.Npars, self.N)
+        self.checkNLO()
+        if self.nlo:
+            print(">> NLO Reweighting")
+        else:
+            print(">> LO Reweighting")
+        print(">> Initialising modules...")
         self.InitModules()
 
         rw_me = self.mods[0]
@@ -57,6 +90,12 @@ class StandaloneReweight:
                 self.hel_dict[prefix] = {}
                 for i, onehel in enumerate(zip(*nhel)):
                     self.hel_dict[prefix][tuple(onehel)] = i + 1
+            elif hasattr(rw_me, 'set_madloop_path') and \
+                 os.path.exists(os.path.join(self.target_dir, 'rwgt', self.onedir, 'SubProcesses', 'MadLoop5_resources', '%sHelConfigs.dat' % prefix.upper())):
+                self.hel_dict[prefix] = {}
+                for i,line in enumerate(open(os.path.join(self.target_dir, 'rwgt', self.onedir, 'SubProcesses', 'MadLoop5_resources', '%sHelConfigs.dat' % prefix.upper()))):
+                    onehel = [int(h) for h in line.split()]
+                    self.hel_dict[prefix][tuple(onehel)] = i+1
 
         self.sorted_pdgs = []
         for pdglist in self.all_pdgs:
@@ -70,10 +109,18 @@ class StandaloneReweight:
         # print self.all_pdgs
         # print self.sorted_pdgs
 
+    def checkNLO(self):
+        if os.path.isdir(os.path.join(self.target_dir, 'rwgt', "rw_me_second", 'SubProcesses')): #if nlo
+            self.nlo = True
+            self.onedir = "rw_me_second"
+        else:
+            self.nlo = False
+            self.onedir = "rw_me"
+
     def InitModules(self):
         iwd = os.getcwd()
 
-        subproc_dir = os.path.join(self.target_dir, 'rwgt/rw_me/SubProcesses')
+        subproc_dir = os.path.join(self.target_dir, 'rwgt', self.onedir, 'SubProcesses')
         sys.path.append(subproc_dir)
         self.mods = []
 
@@ -105,6 +152,8 @@ class StandaloneReweight:
                 self.mods.append(imp.load_module('allmatrix2py', *imp.find_module('allmatrix2py')))
                 del sys.modules['allmatrix2py']
                 self.mods[-1].initialise('%s/param_card_%i.dat' % (self.target_dir, i))
+                if hasattr(self.mods[-1], 'set_madloop_path'):
+                    self.mods[-1].set_madloop_path(os.path.join(subproc_dir, 'MadLoop5_resources'))
 
             os.chdir(iwd)
         elif self.mode == 1:
@@ -327,10 +376,13 @@ class StandaloneReweight:
         val_ref = 1.0
         for iw in xrange(self.N):
             if self.mode == 0:
-                val = self.mods[iw].smatrixhel(final_pdgs, final_parts_i, alphas, scale2, nhel)
+                with stdchannel_redirected(sys.stdout, os.devnull): #prevent MadLoop output
+                    val = self.mods[iw].smatrixhel(final_pdgs, final_parts_i, alphas, scale2, nhel)
             elif self.mode == 1:
                 self.RestoreCache(iw)
                 val = self.mods[0].smatrixhel(final_pdgs, final_parts_i, alphas, scale2, nhel)
+            if self.nlo:
+                val = val[0]
             if iw == 0:
                 val_ref = val
             res[iw] = val / val_ref
