@@ -191,12 +191,14 @@ class StandaloneReweight:
         fnal_pdg_dict = defaultdict(list)
 
         nParts = len(parts)
+        nInits = 0 #count number of incoming particles
         selected_pdgs = []
         for ip in xrange(nParts):
             if stats[ip] not in [-1, 1]:
                 continue
             selected_pdgs.append(pdgs[ip])
             if stats[ip] == -1:
+                nInits += 1
                 init_pdg_dict[pdgs[ip]].append(ip)
             if stats[ip] == +1:
                 fnal_pdg_dict[pdgs[ip]].append(ip)
@@ -214,7 +216,7 @@ class StandaloneReweight:
         reorder_pids = []
         for ip in xrange(len(target_pdgs)):
             target = target_pdgs[ip]
-            if ip < 2:
+            if ip < nInits:
                 reorder_pids.append(init_pdg_dict[target].pop(0))
             else:
                 reorder_pids.append(fnal_pdg_dict[target].pop(0))
@@ -231,7 +233,13 @@ class StandaloneReweight:
         # print final_pdgs
 
         com_final_parts = []
-        pboost = [final_parts[0][i] + final_parts[1][i] for i in xrange(4)]
+        if nInits == 1:
+            pboost = [final_parts[0][i] for i in xrange(4)]
+        elif nInits == 2:
+            pboost = [final_parts[0][i] + final_parts[1][i] for i in range(4)]
+        else:
+            raise Exception("More than two initial particles.")
+
         for part in final_parts:
             com_final_parts.append(self.zboost(part, pboost))
 
