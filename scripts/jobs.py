@@ -34,8 +34,7 @@ queue %(NUMBER)s
 
 SLURM_PREFIX_TEMPLATE = """#! /bin/bash
 #SBATCH --get-user-env
-#SBATCH -e slurm-%%j.err
-#SBATCH -o slurm-%%j.out
+#SBATCH -e %(LOG)s_%%j.err
 
 echo SLURM_JOB_ID: $SLURM_JOB_ID
 echo HOSTNAME: $HOSTNAME
@@ -48,7 +47,7 @@ popd
 """
 
 SLURM_POSTFIX = """
-rmdir /scratch/$USER/%{SLURM_JOB_ID}
+rmdir /scratch/$USER/${SLURM_JOB_ID}
 """
 
 
@@ -157,6 +156,7 @@ class Jobs:
         if is_slurm:
             DO_JOB_PREFIX = SLURM_PREFIX_TEMPLATE
             DO_JOB_PREFIX = DO_JOB_PREFIX % ({
+              'LOG' : script_filename.replace('.sh',''),
               'PWD' : (os.environ['PWD'] if self.args.cwd else '${INITIALDIR}')
             })
         else :
