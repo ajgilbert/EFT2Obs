@@ -73,8 +73,6 @@ if load_hepmc is not None:
     print '>> Loading HepMC input from %s' % load_hepmc
 ignore_beams = args.rivet_ignore_beams
 
-gridpack_dir = 'gridpack_run_%i' % seed
-
 # Check if TMPDIR is set
 if 'TMPDIR' not in os.environ:
     tmpdir = subprocess.check_output(['mktemp', '-d']).strip()
@@ -82,6 +80,8 @@ if 'TMPDIR' not in os.environ:
 else:
     tmpdir = os.environ['TMPDIR']
     print '>> TMPDIR is set to %s' % tmpdir
+
+gridpack_dir = tmpdir+'/gridpack_run_%i' % seed
 
 if os.path.isdir(gridpack_dir):
     subprocess.check_call(['rm', '-r', gridpack_dir])
@@ -158,7 +158,9 @@ if save_hepmc is not None:
     subprocess.check_call(['cp', '%s/events_%i.hepmc.gz' % (tmpdir, seed), '%s/events_%i.hepmc.gz' % (save_hepmc, seed)])
     os.remove('%s/events_%i.hepmc.gz' % (tmpdir, seed))
 else:
-    os.remove('%s/events_%i.hepmc' % (tmpdir, seed))
+    if os.path.isfile('%s/events_i%.hepmc' % (tmpdir,seed)):
+        os.remove('%s/events_%i.hepmc' % (tmpdir, seed))
+
 
 if not args.no_cleanup and load_hepmc is None:
     subprocess.check_call(['rm', '-rf', gridpack_dir])

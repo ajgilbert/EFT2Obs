@@ -32,6 +32,25 @@ queue %(NUMBER)s
 
 """
 
+SLURM_PREFIX_TEMPLATE = """#! /bin/bash
+#SBATCH --get-user-env
+#SBATCH -e %(LOG)s_%%j.err
+
+echo SLURM_JOB_ID: $SLURM_JOB_ID
+echo HOSTNAME: $HOSTNAME
+mkdir -p /scratch/$USER/${SLURM_JOB_ID}
+export TMPDIR=/scratch/$USER/${SLURM_JOB_ID}
+set -o pipefail
+pushd %(PWD)s
+source env.sh
+popd
+"""
+
+SLURM_POSTFIX = """
+rmdir /scratch/$USER/${SLURM_JOB_ID}
+"""
+
+
 ERROR_CAPTURE = """
 function error_exit
 {
@@ -68,7 +87,7 @@ class Jobs:
 
     def attach_job_args(self, group):
         group.add_argument('--job-mode', default=self.job_mode, choices=[
-                           'interactive', 'script', 'lxbatch', 'condor', 'ts'], help='Task execution mode')
+                           'interactive', 'script', 'lxbatch', 'condor', 'ts','slurm'], help='Task execution mode')
         group.add_argument('--task-name', default=self.task_name,
                            help='Task name, used for job script and log filenames for batch system tasks')
         group.add_argument('--dir', default=self.task_dir,
@@ -131,13 +150,20 @@ class Jobs:
             self.job_queue.append(cmd)
             # print cmd
 
-    def create_job_script(self, commands, script_filename, do_log=False):
+    def create_job_script(self, commands, script_filename, do_log=False, is_slurm=False):
         fname = script_filename
         logname = script_filename.replace('.sh', '.log')
-        DO_JOB_PREFIX = JOB_PREFIX
-        DO_JOB_PREFIX = DO_JOB_PREFIX % ({
-          'PWD': (os.environ['PWD'] if self.args.cwd else '${INITIALDIR}')
-        })
+        if is_slurm:
+            DO_JOB_PREFIX = SLURM_PREFIX_TEMPLATE
+            DO_JOB_PREFIX = DO_JOB_PREFIX % ({
+              'LOG' : script_filename.replace('.sh',''),
+              'PWD' : (os.environ['PWD'] if self.args.cwd else '${INITIALDIR}')
+            })
+        else :
+            DO_JOB_PREFIX = JOB_PREFIX
+            DO_JOB_PREFIX = DO_JOB_PREFIX % ({
+              'PWD' : (os.environ['PWD'] if self.args.cwd else '${INITIALDIR}')
+            })
 
         with open(fname, "w") as text_file:
             text_file.write(DO_JOB_PREFIX)
@@ -162,6 +188,8 @@ class Jobs:
                         full_path.replace('.sh', '.status.running'),
                         full_path.replace('.sh', '.status.done')
                     ))
+            if is_slurm:
+                text_file.write(SLURM_POSTFIX)
         st = os.stat(fname)
         os.chmod(fname, st.st_mode | stat.S_IEXEC)
         print 'Created job script: %s' % script_filename
@@ -188,7 +216,7 @@ class Jobs:
         script_list = []
         status_result = {}
         njobs = 0
-        if self.job_mode in ['script', 'lxbatch', 'ts']:
+        if self.job_mode in ['script', 'lxbatch', 'ts', 'slurm']:
             for i, j in enumerate(range(0, len(self.job_queue), self.merge)):
                 njobs += 1
                 script_name = 'job_%s_%i.sh' % (self.task_name, i)
@@ -214,7 +242,7 @@ class Jobs:
                 # we also keep track of the files that were created in case submission to a
                 # batch system was also requested
                 self.create_job_script(
-                    self.job_queue[j:j + self.merge], script_name, self.job_mode in ['script', 'ts'])
+                    self.job_queue[j:j + self.merge], script_name, self.job_mode in ['script', 'ts'],self.job_mode in ['slurm'])
                 script_list.append(script_name)
         if self.job_mode == 'lxbatch':
             for script in script_list:
@@ -223,6 +251,13 @@ class Jobs:
                 if self.tracking and not self.dry_run:
                     os.rename(full_script.replace('.sh', '.status.created'), full_script.replace('.sh', '.status.submitted'))
                 run_command(self.dry_run, 'bsub -o %s %s %s' % (logname, self.bopts, full_script))
+        if self.job_mode == 'slurm':
+            for script in script_list:
+                full_script = os.path.abspath(script)
+                logname = full_script.replace('.sh', '_%A.log')
+                if self.tracking and not self.dry_run:
+                    os.rename(full_script.replace('.sh', '.status.created'), full_script.replace('.sh', '.status.submitted'))
+                run_command(self.dry_run, 'sbatch -o %s %s %s' % (logname, self.bopts, full_script))
         if self.job_mode == 'ts':
             for script in script_list:
                 full_script = os.path.abspath(script)
