@@ -51,11 +51,16 @@ def stdchannel_redirected(stdchannel, dest_filename):
 
 class StandaloneReweight:
 
-    def __init__(self, rw_pack):
+    def __init__(self, rw_pack, no_match_behaviour='sm weights'):
         self.mode = 0
         self.references = {}
         self.caches = {}
         self.tocache = ['couplings', 'weak', 'rscale', 'strong', 'masses', 'widths']
+
+        """Decide what to do when given particles do not match rw module
+        no_match_behaviour = 'sm weights' -> return 1.0 for all reweights
+        no_match_behaviour = 'return False' -> return False"""
+        self.no_match_behaviour=no_match_behaviour
 
         self.target_dir = os.path.abspath(rw_pack)
         self.cfg = GetConfigFile(os.path.join(self.target_dir, 'config.json'))
@@ -97,6 +102,7 @@ class StandaloneReweight:
                     onehel = [int(h) for h in line.split()]
                     self.hel_dict[prefix][tuple(onehel)] = i+1
 
+        self.setNinitsFromPdgList()
         self.sorted_pdgs = []
         for pdglist in self.all_pdgs:
             self.sorted_pdgs.append(self.SortPDGs(pdglist))
@@ -116,6 +122,17 @@ class StandaloneReweight:
         else:
             self.nlo = False
             self.onedir = "rw_me"
+
+    def setNinitsFromPdgList(self):
+        """Get number of initial particles. Make a guess based upon the pdgs of the first two
+        particles in a pdglist. If both are either quarks or gluons -> production process ->
+        Ninits = 2. If not assume decay process -> Ninits = 1.
+        Guess may be wrong so cross checks are made later on."""
+        pdglist = self.all_pdgs[0]
+        if (abs(pdglist[0])<9 or pdglist[0]==21) and (abs(pdglist[0])<9 or pdglist[0]==21):
+            self.nInits = 2
+        else:
+            self.nInits = 1
 
     def InitModules(self):
         iwd = os.getcwd()
@@ -200,7 +217,7 @@ class StandaloneReweight:
 
 
     def SortPDGs(self, pdgs):
-        return sorted(pdgs[:2]) + sorted(pdgs[2:])
+        return sorted(pdgs[:self.nInits]) + sorted(pdgs[self.nInits:])
 
     def invert_momenta(self, p):
             """ fortran/C-python do not order table in the same order"""
@@ -251,7 +268,7 @@ class StandaloneReweight:
 
         #rotate around z axis such that there is no y component
         if pboost[1]!=0:
-            z_rot_angle = math.atan(pboost[2]/pboost[1])
+            z_rot_angle = math.atan2(pboost[2],pboost[1])
         elif pboost[2]>0:
             z_rot_angle = math.pi/2
         else:
@@ -297,7 +314,10 @@ class StandaloneReweight:
 
     def ComputeWeights(self, parts, pdgs, hels, stats, alphas, dohelicity=True, verb=False):
         assert len(parts) == len(pdgs) == len(hels) == len(stats)
-        res = [1.0] * self.N
+        if self.no_match_behaviour=='return False':
+            res = False
+        else:
+            res = [1.0] * self.N
 
         init_pdg_dict = defaultdict(list)
         fnal_pdg_dict = defaultdict(list)
@@ -314,6 +334,8 @@ class StandaloneReweight:
                 init_pdg_dict[pdgs[ip]].append(ip)
             if stats[ip] == +1:
                 fnal_pdg_dict[pdgs[ip]].append(ip)
+
+        assert nInits==self.nInits #check that nInits guess from earlier was correct
 
         evt_sorted_pdgs = self.SortPDGs(selected_pdgs)
 
