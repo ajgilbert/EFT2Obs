@@ -40,9 +40,8 @@ else
 fi
 
 mkdir "gridpack_${PROCESS}"
-echo "OY"
 pushd "gridpack_${PROCESS}"
-        tar -xf ../${RUNLABEL}_gridpack.tar.gz
+	tar -xf ../${RUNLABEL}_gridpack.tar.gz
 	mkdir -p madevent/Events/${RUNLABEL}
 	cp ../Events/${RUNLABEL}/unweighted_events.lhe.gz madevent/Events/${RUNLABEL}
 	pushd madevent
