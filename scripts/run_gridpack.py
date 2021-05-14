@@ -7,6 +7,7 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument('--gridpack', default='.')
 parser.add_argument('--launch-dir', default='.')
+parser.add_argument('--madgraph-dir', default='./MG5_aMC_v2_6_7/')
 parser.add_argument('-e', '--events', default=5000, type=int, help="Number of events to generate")
 parser.add_argument('-s', '--seed', type=int, default=1, help="Random number seed")
 parser.add_argument('-p', '--plugins', type=str, default='', help="Comma separated list of rivet plugins to run")
@@ -43,6 +44,8 @@ def MaybeMakeDir(pathname):
 iwd = os.getcwd()
 # Path we launched from (different from iwd if this is running in a batch job)
 launch_dir = os.path.abspath(args.launch_dir)
+
+madgraph_dir = os.path.abspath(args.madgraph_dir)
 
 outdir = ResolvePath(args.outdir, args.launch_dir)
 MaybeMakeDir(outdir)
@@ -108,6 +111,43 @@ if load_hepmc is None:
             os.chdir('madevent')
             subprocess.check_call('echo "0" | ./bin/madevent --debug reweight GridRun', shell=True)
             os.chdir(gp_dir)
+            if(os.path.isfile("madspin_card.dat")):
+                subprocess.check_call(['cp', 'madevent/Events/GridRun/unweighted_events.lhe.gz', './events_%i.lhe.gz' % (seed)])
+                subprocess.check_call(['gunzip', './events_%i.lhe.gz' % (seed)])
+                initrwgtlines = []
+                isReweightBlock = False
+                with open("events_%i.lhe"%(seed), "r") as origfile: #Need to keep track of the initrwgt header because running madspin removes it
+                    for line in origfile:
+                        if "initrwgt" in line:
+                            isReweightBlock=True
+                        if "/initrwgt" in line:
+                            isReweightBlock=False
+                        if isReweightBlock or "/initrwgt" in line:
+                            initrwgtlines.append(line)
+                origfile.close()
+                msrunfile = open("madspinrun.dat","w")
+                msrunfile.write('import events_%i.lhe\n'%(seed))
+                msseed = seed+100000000 
+                msrunfile.write('echo "set seed %i"\n'%(msseed))
+                madspcard = open("madspin_card.dat","r")
+                mslines = madspcard.readlines()
+                madspcard.close()
+                for line in mslines:
+                     msrunfile.write(line)
+                msrunfile.close()
+                subprocess.check_call(['%s/MadSpin/madspin' %(madgraph_dir), 'madspinrun.dat' ]) #Run madspin
+                subprocess.check_call(['gunzip','./events_%i_decayed.lhe.gz' %(seed)])
+                infile = open("events_%i_decayed.lhe"%(seed), "r")
+                outfile = open("events_%i_decayed_updated.lhe"%(seed),"w")
+                for line in infile: #Now we need to put the initrwgt info back in the header
+                    if "/header" in line:
+                        for initrwline in initrwgtlines:
+                            outfile.write(initrwline)
+                    outfile.write(line)
+                infile.close()
+                outfile.close()
+                subprocess.check_call(['gzip','./events_%i_decayed_updated.lhe'%(seed)])
+                subprocess.check_call(['mv', './events_%i_decayed_updated.lhe.gz'%(seed), 'madevent/Events/GridRun/unweighted_events.lhe.gz']) #Move the decayed events back into the usual location 
     else:
         if args.nlo:
             subprocess.check_call(['cp', '%s/events_%i.lhe.gz' % (load_lhe, seed), 'madevent/Events/GridRun/unweighted_events.lhe.gz'])
