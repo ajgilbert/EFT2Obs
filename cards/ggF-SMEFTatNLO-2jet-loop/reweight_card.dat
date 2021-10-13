@@ -1,0 +1,44 @@
+change rwgt_dir rwgt
+change process p p > h NP=2 QED=1 [noborn=QCD]
+change process p p > h j NP=2 QED=1 [noborn=QCD] --add
+change process p p > h j j NP=2 QED=1 [noborn=QCD] --add
+launch --rwgt_name=rw0000
+set dim6 8 0
+set dim62f 19 0
+set dim62f 24 0
+launch --rwgt_name=rw0001
+set dim6 8 0.005
+set dim62f 19 0
+set dim62f 24 0
+launch --rwgt_name=rw0002
+set dim6 8 0.01
+set dim62f 19 0
+set dim62f 24 0
+launch --rwgt_name=rw0003
+set dim6 8 0
+set dim62f 19 0.005
+set dim62f 24 0
+launch --rwgt_name=rw0004
+set dim6 8 0
+set dim62f 19 0.01
+set dim62f 24 0
+launch --rwgt_name=rw0005
+set dim6 8 0
+set dim62f 19 0
+set dim62f 24 0.005
+launch --rwgt_name=rw0006
+set dim6 8 0
+set dim62f 19 0
+set dim62f 24 0.01
+launch --rwgt_name=rw0007
+set dim6 8 0.01
+set dim62f 19 0.01
+set dim62f 24 0
+launch --rwgt_name=rw0008
+set dim6 8 0.01
+set dim62f 19 0
+set dim62f 24 0.01
+launch --rwgt_name=rw0009
+set dim6 8 0
+set dim62f 19 0.01
+set dim62f 24 0.01
