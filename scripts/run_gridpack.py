@@ -201,7 +201,5 @@ else:
     if not args.to_step == 'lhe': #if stopped at lhe, there would be no hepmc to delete 
         os.remove('%s/events_%i.hepmc' % (tmpdir, seed))
 
-
-
 if not args.no_cleanup and load_hepmc is None:
     subprocess.check_call(['rm', '-rf', gridpack_dir])
