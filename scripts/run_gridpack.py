@@ -198,7 +198,7 @@ if save_hepmc is not None:
     subprocess.check_call(['cp', '%s/events_%i.hepmc.gz' % (tmpdir, seed), '%s/events_%i.hepmc.gz' % (save_hepmc, seed)])
     os.remove('%s/events_%i.hepmc.gz' % (tmpdir, seed))
 else:
-    if not args.to_step == 'lhe': #if stopped at lhe, there would be no hepmc to delete 
+    if not args.to_step == 'lhe': #if stopped at lhe, there would be no hepmc to delete
         os.remove('%s/events_%i.hepmc' % (tmpdir, seed))
 
 if not args.no_cleanup and load_hepmc is None:
