@@ -202,5 +202,6 @@ else:
         os.remove('%s/events_%i.hepmc' % (tmpdir, seed))
 
 
+
 if not args.no_cleanup and load_hepmc is None:
     subprocess.check_call(['rm', '-rf', gridpack_dir])
