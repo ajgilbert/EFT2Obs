@@ -1,0 +1,6 @@
+import model SMEFTatNLO-ggFshape
+
+generate p p > H QED=1 NP=0 [noborn=QCD]
+add process p p > H j QED=1 NP=0 [noborn=QCD]
+
+output ggF-SMEFTatNLO-1jet-tree-loop
