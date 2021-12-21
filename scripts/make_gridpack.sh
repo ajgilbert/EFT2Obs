@@ -40,7 +40,6 @@ else
 fi
 
 mkdir "gridpack_${PROCESS}"
-
 pushd "gridpack_${PROCESS}"
 	tar -xf ../${RUNLABEL}_gridpack.tar.gz
 	mkdir -p madevent/Events/${RUNLABEL}
@@ -65,6 +64,15 @@ pushd "gridpack_${PROCESS}"
 		fi
 	popd
 	rm -r madevent/Events/${RUNLABEL}
+        if [ -e ${IWD}/cards/${PROCESS}/madspin_card.dat ] ; then
+            cp ${IWD}/cards/${PROCESS}/madspin_card.dat ${IWD}/${MG_DIR}/${PROCESS}/Cards/
+            echo "import ../Events/${RUNLABEL}/unweighted_events.lhe.gz" > madspinrun.dat
+            cat ${IWD}/${MG_DIR}/${PROCESS}/Cards/madspin_card.dat >> madspinrun.dat
+            ${IWD}/${MG_DIR}/MadSpin/madspin madspinrun.dat 
+            rm madspinrun.dat
+            rm -rf tmp*
+            cp ${IWD}/${MG_DIR}/${PROCESS}/Cards/madspin_card.dat ./madspin_card.dat
+        fi
 	tar -zcf "../gridpack_${PROCESS}.tar.gz" ./*
 popd
 
