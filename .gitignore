@@ -23,4 +23,5 @@ rivet-bootstrap
 hepmc*/
 local/
 *.tar.gz
+mgconfigscript
 
