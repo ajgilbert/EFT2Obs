@@ -1,0 +1,289 @@
+change rwgt_dir rwgt
+launch --rwgt_name=rw0000
+set SMEFT 5 0
+set SMEFT 28 0
+set SMEFT 104 0
+set SMEFT 9 0
+set SMEFT 109 0
+set SMEFT 107 0
+set SMEFT 2 0
+launch --rwgt_name=rw0001
+set SMEFT 5 0.005
+set SMEFT 28 0
+set SMEFT 104 0
+set SMEFT 9 0
+set SMEFT 109 0
+set SMEFT 107 0
+set SMEFT 2 0
+launch --rwgt_name=rw0002
+set SMEFT 5 0.01
+set SMEFT 28 0
+set SMEFT 104 0
+set SMEFT 9 0
+set SMEFT 109 0
+set SMEFT 107 0
+set SMEFT 2 0
+launch --rwgt_name=rw0003
+set SMEFT 5 0
+set SMEFT 28 0.005
+set SMEFT 104 0
+set SMEFT 9 0
+set SMEFT 109 0
+set SMEFT 107 0
+set SMEFT 2 0
+launch --rwgt_name=rw0004
+set SMEFT 5 0
+set SMEFT 28 0.01
+set SMEFT 104 0
+set SMEFT 9 0
+set SMEFT 109 0
+set SMEFT 107 0
+set SMEFT 2 0
+launch --rwgt_name=rw0005
+set SMEFT 5 0
+set SMEFT 28 0
+set SMEFT 104 0.005
+set SMEFT 9 0
+set SMEFT 109 0
+set SMEFT 107 0
+set SMEFT 2 0
+launch --rwgt_name=rw0006
+set SMEFT 5 0
+set SMEFT 28 0
+set SMEFT 104 0.01
+set SMEFT 9 0
+set SMEFT 109 0
+set SMEFT 107 0
+set SMEFT 2 0
+launch --rwgt_name=rw0007
+set SMEFT 5 0
+set SMEFT 28 0
+set SMEFT 104 0
+set SMEFT 9 0.005
+set SMEFT 109 0
+set SMEFT 107 0
+set SMEFT 2 0
+launch --rwgt_name=rw0008
+set SMEFT 5 0
+set SMEFT 28 0
+set SMEFT 104 0
+set SMEFT 9 0.01
+set SMEFT 109 0
+set SMEFT 107 0
+set SMEFT 2 0
+launch --rwgt_name=rw0009
+set SMEFT 5 0
+set SMEFT 28 0
+set SMEFT 104 0
+set SMEFT 9 0
+set SMEFT 109 0.005
+set SMEFT 107 0
+set SMEFT 2 0
+launch --rwgt_name=rw0010
+set SMEFT 5 0
+set SMEFT 28 0
+set SMEFT 104 0
+set SMEFT 9 0
+set SMEFT 109 0.01
+set SMEFT 107 0
+set SMEFT 2 0
+launch --rwgt_name=rw0011
+set SMEFT 5 0
+set SMEFT 28 0
+set SMEFT 104 0
+set SMEFT 9 0
+set SMEFT 109 0
+set SMEFT 107 0.005
+set SMEFT 2 0
+launch --rwgt_name=rw0012
+set SMEFT 5 0
+set SMEFT 28 0
+set SMEFT 104 0
+set SMEFT 9 0
+set SMEFT 109 0
+set SMEFT 107 0.01
+set SMEFT 2 0
+launch --rwgt_name=rw0013
+set SMEFT 5 0
+set SMEFT 28 0
+set SMEFT 104 0
+set SMEFT 9 0
+set SMEFT 109 0
+set SMEFT 107 0
+set SMEFT 2 0.005
+launch --rwgt_name=rw0014
+set SMEFT 5 0
+set SMEFT 28 0
+set SMEFT 104 0
+set SMEFT 9 0
+set SMEFT 109 0
+set SMEFT 107 0
+set SMEFT 2 0.01
+launch --rwgt_name=rw0015
+set SMEFT 5 0.01
+set SMEFT 28 0.01
+set SMEFT 104 0
+set SMEFT 9 0
+set SMEFT 109 0
+set SMEFT 107 0
+set SMEFT 2 0
+launch --rwgt_name=rw0016
+set SMEFT 5 0.01
+set SMEFT 28 0
+set SMEFT 104 0.01
+set SMEFT 9 0
+set SMEFT 109 0
+set SMEFT 107 0
+set SMEFT 2 0
+launch --rwgt_name=rw0017
+set SMEFT 5 0.01
+set SMEFT 28 0
+set SMEFT 104 0
+set SMEFT 9 0.01
+set SMEFT 109 0
+set SMEFT 107 0
+set SMEFT 2 0
+launch --rwgt_name=rw0018
+set SMEFT 5 0.01
+set SMEFT 28 0
+set SMEFT 104 0
+set SMEFT 9 0
+set SMEFT 109 0.01
+set SMEFT 107 0
+set SMEFT 2 0
+launch --rwgt_name=rw0019
+set SMEFT 5 0.01
+set SMEFT 28 0
+set SMEFT 104 0
+set SMEFT 9 0
+set SMEFT 109 0
+set SMEFT 107 0.01
+set SMEFT 2 0
+launch --rwgt_name=rw0020
+set SMEFT 5 0.01
+set SMEFT 28 0
+set SMEFT 104 0
+set SMEFT 9 0
+set SMEFT 109 0
+set SMEFT 107 0
+set SMEFT 2 0.01
+launch --rwgt_name=rw0021
+set SMEFT 5 0
+set SMEFT 28 0.01
+set SMEFT 104 0.01
+set SMEFT 9 0
+set SMEFT 109 0
+set SMEFT 107 0
+set SMEFT 2 0
+launch --rwgt_name=rw0022
+set SMEFT 5 0
+set SMEFT 28 0.01
+set SMEFT 104 0
+set SMEFT 9 0.01
+set SMEFT 109 0
+set SMEFT 107 0
+set SMEFT 2 0
+launch --rwgt_name=rw0023
+set SMEFT 5 0
+set SMEFT 28 0.01
+set SMEFT 104 0
+set SMEFT 9 0
+set SMEFT 109 0.01
+set SMEFT 107 0
+set SMEFT 2 0
+launch --rwgt_name=rw0024
+set SMEFT 5 0
+set SMEFT 28 0.01
+set SMEFT 104 0
+set SMEFT 9 0
+set SMEFT 109 0
+set SMEFT 107 0.01
+set SMEFT 2 0
+launch --rwgt_name=rw0025
+set SMEFT 5 0
+set SMEFT 28 0.01
+set SMEFT 104 0
+set SMEFT 9 0
+set SMEFT 109 0
+set SMEFT 107 0
+set SMEFT 2 0.01
+launch --rwgt_name=rw0026
+set SMEFT 5 0
+set SMEFT 28 0
+set SMEFT 104 0.01
+set SMEFT 9 0.01
+set SMEFT 109 0
+set SMEFT 107 0
+set SMEFT 2 0
+launch --rwgt_name=rw0027
+set SMEFT 5 0
+set SMEFT 28 0
+set SMEFT 104 0.01
+set SMEFT 9 0
+set SMEFT 109 0.01
+set SMEFT 107 0
+set SMEFT 2 0
+launch --rwgt_name=rw0028
+set SMEFT 5 0
+set SMEFT 28 0
+set SMEFT 104 0.01
+set SMEFT 9 0
+set SMEFT 109 0
+set SMEFT 107 0.01
+set SMEFT 2 0
+launch --rwgt_name=rw0029
+set SMEFT 5 0
+set SMEFT 28 0
+set SMEFT 104 0.01
+set SMEFT 9 0
+set SMEFT 109 0
+set SMEFT 107 0
+set SMEFT 2 0.01
+launch --rwgt_name=rw0030
+set SMEFT 5 0
+set SMEFT 28 0
+set SMEFT 104 0
+set SMEFT 9 0.01
+set SMEFT 109 0.01
+set SMEFT 107 0
+set SMEFT 2 0
+launch --rwgt_name=rw0031
+set SMEFT 5 0
+set SMEFT 28 0
+set SMEFT 104 0
+set SMEFT 9 0.01
+set SMEFT 109 0
+set SMEFT 107 0.01
+set SMEFT 2 0
+launch --rwgt_name=rw0032
+set SMEFT 5 0
+set SMEFT 28 0
+set SMEFT 104 0
+set SMEFT 9 0.01
+set SMEFT 109 0
+set SMEFT 107 0
+set SMEFT 2 0.01
+launch --rwgt_name=rw0033
+set SMEFT 5 0
+set SMEFT 28 0
+set SMEFT 104 0
+set SMEFT 9 0
+set SMEFT 109 0.01
+set SMEFT 107 0.01
+set SMEFT 2 0
+launch --rwgt_name=rw0034
+set SMEFT 5 0
+set SMEFT 28 0
+set SMEFT 104 0
+set SMEFT 9 0
+set SMEFT 109 0.01
+set SMEFT 107 0
+set SMEFT 2 0.01
+launch --rwgt_name=rw0035
+set SMEFT 5 0
+set SMEFT 28 0
+set SMEFT 104 0
+set SMEFT 9 0
+set SMEFT 109 0
+set SMEFT 107 0.01
+set SMEFT 2 0.01

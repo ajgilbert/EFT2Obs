@@ -1,0 +1,8 @@
+import model SMEFTsim_topU3l_MwScheme_UFO-massless  
+
+define lep = mu+ mu- e+ e-
+define nu = vm vm~ ve ve~
+
+generate p p > lep nu a QED=4 NP<=1 SMHLOOP=0
+
+output WG-SMEFTsim3

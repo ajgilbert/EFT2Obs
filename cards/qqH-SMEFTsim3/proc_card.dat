@@ -1,0 +1,5 @@
+import model SMEFTsim_topU3l_MwScheme_UFO-massless
+
+generate p p > h j j QCD=0 NP<=1
+
+output qqH-SMEFTsim3 

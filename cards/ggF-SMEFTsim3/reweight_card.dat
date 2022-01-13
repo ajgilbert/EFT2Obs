@@ -1,0 +1,7 @@
+change rwgt_dir rwgt
+launch --rwgt_name=rw0000
+set SMEFT 6 0
+launch --rwgt_name=rw0001
+set SMEFT 6 0.005
+launch --rwgt_name=rw0002
+set SMEFT 6 0.01

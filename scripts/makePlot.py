@@ -1,3 +1,5 @@
+from __future__ import print_function
+from builtins import range
 import argparse
 import ROOT
 import json
@@ -23,7 +25,7 @@ def MakeHist(name, jhist, vals=dict(), noSquare=False, noCross=False):
     label_list = []
     if isinstance(jhist['edges'][0][0], list):
         is2D = True
-        print '>> Unrolling 2D hist'
+        print('>> Unrolling 2D hist')
         edge_list = [0.]
         x_edge_list = [0.]
         x_label_list = []
@@ -43,7 +45,7 @@ def MakeHist(name, jhist, vals=dict(), noSquare=False, noCross=False):
                 x_edge_list.append(edge_list[iX])
 
         x_edge_list.append(edge_list[-1])
-        print x_label_list
+        print(x_label_list)
         # print edge_list
         # print x_edge_list
         # print edge_list
@@ -55,12 +57,15 @@ def MakeHist(name, jhist, vals=dict(), noSquare=False, noCross=False):
 
     h = ROOT.TH1D(name, name, len(edges) - 1, edges)
     h_dev = ROOT.TH1D(name, name, len(edges) - 1, edges)
-    for i in xrange(1, h.GetNbinsX() + 1):
+    for i in range(1, h.GetNbinsX() + 1):
         term = 0.0
         term_err = 0.0
         if is2D:
             h.GetXaxis().SetBinLabel(i, label_list[i - 1])
             h_dev.GetXaxis().SetBinLabel(i, label_list[i - 1])
+        if 'bin_labels' in jhist:
+            h.GetXaxis().SetBinLabel(i, jhist['bin_labels'][i - 1])
+            h_dev.GetXaxis().SetBinLabel(i, jhist['bin_labels'][i - 1])
         for bininfo in jhist['bins'][i - 1]:
             val = bininfo[0]
             err = bininfo[1]
@@ -86,6 +91,8 @@ def MakeHist(name, jhist, vals=dict(), noSquare=False, noCross=False):
         h_dev.SetBinError(i, math.sqrt(term_err) * h.GetBinContent(i))
     # h.Print("range")
     # h_dev.Print("range")
+    if 'bin_labels' in jhist:
+        h.GetXaxis().SetLabelSize(h.GetXaxis().GetLabelSize() * 0.5)
     h.Add(h_dev)
 
     if is2D:
@@ -189,11 +196,11 @@ for tgt in args.draw:
 
 
 plot.FixTopRange(pads[0], plot.GetPadYMax(pads[0]), 0.30)
-print h_axes[0].GetMinimum(), h_axes[0].GetMaximum()
+print(h_axes[0].GetMinimum(), h_axes[0].GetMaximum())
 if hasattr(hists[0], 'x_edge_list'):
     x_edge_list = hists[0].x_edge_list
     x_label_list = hists[0].x_label_list
-    print x_edge_list
+    print(x_edge_list)
     line = ROOT.TLine()
     text = ROOT.TLatex()
     plot.Set(text, TextAlign=22, TextFont=42, TextSize=0.02)
@@ -201,10 +208,10 @@ if hasattr(hists[0], 'x_edge_list'):
     if args.logy:
         y_height = math.pow(10, math.log10(h_axes[0].GetMinimum()) + 0.1 * (math.log10(h_axes[0].GetMaximum()) - math.log10(h_axes[0].GetMinimum())))
     plot.Set(line, LineStyle=2)
-    for ix in xrange(1, len(x_edge_list) - 1):
+    for ix in range(1, len(x_edge_list) - 1):
         line.DrawLine(x_edge_list[ix], h_axes[0].GetMinimum(), x_edge_list[ix], h_axes[0].GetMaximum())
-    for ix in xrange(len(x_label_list)):
-        print ix, len(x_edge_list), len(x_label_list)
+    for ix in range(len(x_label_list)):
+        print(ix, len(x_edge_list), len(x_label_list))
         text.DrawLatex((x_edge_list[ix + 1] + x_edge_list[ix]) / 2., y_height, '[%g, %g]' % (x_label_list[ix][0], x_label_list[ix][1]))
 
         # plot.DrawVerticalLine(pads[0], line, x_edge)
