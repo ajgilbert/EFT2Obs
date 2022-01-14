@@ -7,13 +7,14 @@ Two methods:
    contains a block labeled by 'COMMON/COUPLINGS/'. The meaning of these couplings can
    be found in the model's couplings.py file. Relevant parameters can be found by seeing
    whether they appear in these couplings.
-2) [SMEFTsim-only method] Look at the postscript files containing the feynman diagrams.
+2) [SMEFTsim v3-only method] Look at the postscript files containing the feynman diagrams.
    Each diagram has associated coupling orders, e.g. NPcHG, NPcHB. If NPcHG=1 then this
    means that cHG is relevant for this diagrams. By looping over all diagrams, we can
    find all the relevant parameters.
 
 By default, the script will perform both methods as a way of validation. If not using
-SMEFTsim, use the --noValidation tag to use only method 1 (which is model-independent).
+SMEFTsim v3, the script will automatically detect this and only use method 1. In case this
+automatic detection fails, use the --noValidation tag to use only method 1.
 """
 
 import sys
@@ -160,6 +161,10 @@ process = args.process
 blocks = args.blocks.split(",")
 
 model = loadModel(process)
+if ("SMEFTsim" not in model.__name__) or (int(model.__version__[0]) != 3):
+  print(">> Not using SMEFTsim v3 -> using only method 1")
+  args.noValidation = True
+
 possible_params = getParameters(model, blocks)
 p1 = findRelevantParameters1(process, possible_params)
 print("Method 1 relevant parameters:", sorted(p1))
