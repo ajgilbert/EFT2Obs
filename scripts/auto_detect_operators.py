@@ -40,6 +40,7 @@ sys.path.append(os.path.join(MG_DIR, "models"))
 
 import check_param_card as param_card_mod
 
+
 def loadModel(process):
   with open(os.path.join("cards", process, "proc_card.dat"), "r") as f:
     model_name = f.readline().strip("\n").split("import model")[1].split("-")[0].strip(" ")
@@ -48,11 +49,23 @@ def loadModel(process):
   model = importlib.import_module(model_name)
   return model
 
-def getParameters(model, blocks):
+def getParameters(process, model, blocks):
+  """
+  Find all parameters belonging to blocks and then cross-check with the param card.
+  There may be fewer parameters in the param card if a restrict card was used.
+  """
+  param_card = param_card_mod.ParamCard(os.path.join(MG_DIR, process, "Cards", "param_card.dat"))
+
   params = []
   for param in model.all_parameters:
-    if param.lhablock in blocks:
-      params.append(param.name)
+    block = param.lhablock
+    if block in blocks:
+      #check that this block exists in param card
+      assert block.lower() in param_card.keys() #block names appear in lower case in param card
+      
+      #if this param in param card
+      if (param.lhacode[0],) in param_card[block.lower()].keys():
+        params.append(param.name)
   return params
 
 def makeConfig(process, model, params, args):
@@ -75,8 +88,10 @@ def makeReweight(process):
   command = "python scripts/make_reweight_card.py cards/%s/config.json cards/%s/reweight_card.dat"%(process, process)
   os.system(command)
 
+
 """Method 1"""
 
+#used to split an equation into its terms
 delims = "()-+*/"
 regex = "".join(["\%s|"%delim for delim in delims])[:-1]
 
@@ -175,6 +190,11 @@ def isnum(string):
   return True
 
 def expandParameters(params, model, level=0):
+  """
+  Recursively find the dependence of a set of parameters on other parameters.
+  The recursion stops when it find a parameter that is not dependent on any other
+  i.e. it is just a number.
+  """
   offset=level*2*" "
   
   new_params = []
@@ -234,7 +254,7 @@ if not smeftsim_v3:
   print(">> Not using SMEFTsim v3 -> using only method 1")
   args.noValidation = True
 
-possible_params = getParameters(model, blocks)
+possible_params = getParameters(process, model, blocks)
 print(">> Possible parameters: %s"%possible_params)
 
 p1 = sorted(findRelevantParameters1(process, possible_params))
