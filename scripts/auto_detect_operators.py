@@ -207,7 +207,7 @@ def expandParameters(params, model, level=0):
       new_params.append(param)
     else:
       maybe_params = re.split(regex, value.replace(" ", ""))
-      filtered_params = list(filter(lambda x: hasattr(model.parameters, x), maybe_params)) 
+      filtered_params = set(filter(lambda x: hasattr(model.parameters, x), maybe_params)) 
       new_params.extend(expandParameters(filtered_params, model, level+1))
   return new_params
 
@@ -236,6 +236,9 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--process', '-p', default='zh-HEL', help="Label of the process, must correspond to the dir name that was created in the MG dir")
 parser.add_argument('--blocks', '-b', default="SMEFT", help="Comma seperated list of parameters blocks to consider, e.g. SMEFT,SMEFTcpv")
 parser.add_argument('--noValidation', default=False, action="store_true", help="Only use method 1. Do not bother using method 2 to validate")
+parser.add_argument('--noReweightCard', default=False, action="store_true", help="Do not make a reweight card.")
+parser.add_argument('--noConfigJson', default=False, action="store_true", help="Do not make a config json.")
+
 
 parser.add_argument('--def-val', type=float, default=0.01)
 parser.add_argument('--set-inactive', type=str, nargs='*', help='')
@@ -273,5 +276,7 @@ else:
 
 print(">> Final relevant parameters: %s"%relevant_params)
 
-makeConfig(process, model, relevant_params, args)
-makeReweight(process)
+if not args.noConfigJson:
+  makeConfig(process, model, relevant_params, args)
+if not args.noConfigJson and not args.noReweightCard:
+  makeReweight(process)
