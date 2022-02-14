@@ -212,11 +212,13 @@ def expandParameters(params, model, level=0):
   return new_params
 
 def getRelevantParametersPropCorr(process, possible_params, model):
-  dummy_particles = ["h1", "z1", "w1", "t1"]
+  dummy_particles = ["h1", "z1", "w1+", "w1-", "t1", "t1~"]
   dummy_to_parameter = {"h1": "dWH",
                         "z1": "dWZ",
-                        "w1": "dWW",
-                        "t1": "dWT"}
+                        "w1+": "dWW",
+                        "w1-": "dWW",
+                        "t1": "dWT",
+                        "t1~":"dWT"}
   dependent_parameters = []
  
   ps_files = getPSFiles(process)
