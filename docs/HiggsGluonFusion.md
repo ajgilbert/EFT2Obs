@@ -99,6 +99,15 @@ HIGGSPRODMODE=GGF python scripts/run_gridpack.py --seed 1 -e 1000 -p HiggsTempla
  --gridpack gridpack_ggF-SMEFTatNLO-1jet-tree-loop.tar.gz -o localtest-ggF-SMEFTatNLO-1jet-tree-loop
 ```
 
+Batch run for 2-jet:
+
+```shell
+DIR="ggF-SMEFTatNLO-2jet-loop"; python scripts/launch_jobs.py \
+ --gridpack gridpack_${DIR}.tar.gz -j 200 -s 1 -e 2500 -p HiggsTemplateCrossSections \
+ -o test-${DIR} --sub-opts '+MaxRuntime = 18000\nrequirements = (OpSysAndVer =?= "CentOS7")' \
+ --task-name test-${DIR} --dir jobs --job-mode condor --env "HIGGSPRODMODE=GGF"
+```
+
 ### yodamerge
 
 Note that the options `--add` and `--no-veto-empty` are important.

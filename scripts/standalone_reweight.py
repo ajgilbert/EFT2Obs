@@ -177,6 +177,8 @@ class StandaloneReweight:
             os.chdir(subproc_dir)
             self.mods.append(imp.load_module('allmatrix2py', *imp.find_module('allmatrix2py')))
             mod = self.mods[0]
+            if hasattr(mod, 'set_madloop_path'):
+                mod.set_madloop_path(os.path.join(subproc_dir, 'MadLoop5_resources'))
             self.references = {}
 
             for block in self.tocache:
