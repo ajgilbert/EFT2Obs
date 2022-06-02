@@ -1,101 +1,23 @@
+from __future__ import print_function
+from builtins import range
 import argparse
 import ROOT
 import json
 import math
 import plotting as plot
 from array import array
+from eftscaling import EFTScaling
 
 ROOT.PyConfig.IgnoreCommandLineOptions = True
 ROOT.gROOT.SetBatch(ROOT.kTRUE)
 ROOT.TH1.AddDirectory(False)
 plot.ModTDRStyle()
 
-
 def Translate(arg, translations):
     if arg in translations:
         return translations[arg]
     else:
         return arg
-
-
-def MakeHist(name, jhist, vals=dict(), noSquare=False, noCross=False):
-    is2D = False
-    label_list = []
-    if isinstance(jhist['edges'][0][0], list):
-        is2D = True
-        print '>> Unrolling 2D hist'
-        edge_list = [0.]
-        x_edge_list = [0.]
-        x_label_list = []
-        width_list = []
-        for X in jhist['edges']:
-            # Add the width of this bin in Y to the previous edge
-            edge_list.append(edge_list[-1] + (X[1][1] - X[1][0]))
-            width_list.append((X[0][1] - X[0][0]) * (X[1][1] - X[1][0]))
-            label_list.append('[%.2g, %.2g]' % (X[1][0], X[1][1]))
-        for iX, X in enumerate(jhist['edges']):
-            if iX == 0:
-                x_label_list.append(jhist['edges'][iX][0])
-                continue
-            if jhist['edges'][iX][0] != x_label_list[-1]:
-                x_label_list.append(jhist['edges'][iX][0])
-            if jhist['edges'][iX][0] != jhist['edges'][iX - 1][0]:
-                x_edge_list.append(edge_list[iX])
-
-        x_edge_list.append(edge_list[-1])
-        print x_label_list
-        # print edge_list
-        # print x_edge_list
-        # print edge_list
-        # print width_list
-        edges = array('d', edge_list)
-    else:
-        edges = array('d', [jhist['edges'][0][0]] + [X[1] for X in jhist['edges']])
-        width_list = [(X[1] - X[0]) for X in jhist['edges']]
-
-    h = ROOT.TH1D(name, name, len(edges) - 1, edges)
-    h_dev = ROOT.TH1D(name, name, len(edges) - 1, edges)
-    for i in xrange(1, h.GetNbinsX() + 1):
-        term = 0.0
-        term_err = 0.0
-        if is2D:
-            h.GetXaxis().SetBinLabel(i, label_list[i - 1])
-            h_dev.GetXaxis().SetBinLabel(i, label_list[i - 1])
-        for bininfo in jhist['bins'][i - 1]:
-            val = bininfo[0]
-            err = bininfo[1]
-            pars = bininfo[2:]
-            if noSquare and len(pars) == 2:
-                continue
-            if noCross and len(pars) == 2 and pars[0] != pars[1]:
-                continue
-            for p in pars:
-                if p in vals:
-                    val *= vals[p]
-                    err *= vals[p]
-                else:
-                    val *= 0.0
-                    err *= 0.0
-            term += val
-            term_err += (err * err)
-            # print bininfo, val
-        # print term, term_err
-        h.SetBinContent(i, jhist['areas'][i - 1] / width_list[i - 1])
-        h.SetBinError(i, 0.0)
-        h_dev.SetBinContent(i, term * h.GetBinContent(i))
-        h_dev.SetBinError(i, math.sqrt(term_err) * h.GetBinContent(i))
-    # h.Print("range")
-    # h_dev.Print("range")
-    h.Add(h_dev)
-
-    if is2D:
-        h.x_edge_list = x_edge_list
-        h.x_label_list = x_label_list
-        h.GetXaxis().LabelsOption('v')
-        h.GetXaxis().SetLabelSize(h.GetXaxis().GetLabelSize() * 0.6)
-    # h.Scale(1, 'width')
-    return h
-
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--hist', default='ggF')
@@ -115,8 +37,7 @@ parser.add_argument('--translate', default=None, help="json file to translate pa
 args = parser.parse_args()
 
 
-with open(args.hist) as jsonfile:
-    jhist = json.load(jsonfile)
+jhist = EFTScaling.fromJSON(args.hist)
 
 with open(args.config) as jsonfile:
     cfg = json.load(jsonfile)
@@ -137,7 +58,8 @@ pads = plot.TwoPadSplit(0.27, 0.01, 0.01)
 hists = []
 hist_errs = []
 
-h_nominal = MakeHist('nominal', jhist)
+h_ref_nominal = jhist.getNominalTH1('nominal')
+h_nominal = h_ref_nominal.Clone()
 
 hists.append(h_nominal)
 hist_errs.append(h_nominal)
@@ -160,7 +82,7 @@ legend = ROOT.TLegend(0.60, 0.88 - 0.05 * len(args.draw), 0.90, 0.91, '', 'NBNDC
 legend.AddEntry(h_nominal, 'Nominal', 'L')
 
 plot.Set(h_nominal, LineColor=1, LineWidth=3)
-
+h_nominal.Scale(1., 'width')
 h_nominal.Draw('HISTSAMEE')
 
 for tgt in args.draw:
@@ -173,7 +95,8 @@ for tgt in args.draw:
         val = float(X.split('=')[1])
         vals[label] = float(val)
         labels.append('%s=%g' % (Translate(label, translate_tex), val))
-    h = MakeHist('hist1', jhist, vals, args.no_square, args.no_cross)
+    h = jhist.getScaled(h_ref_nominal, vals, lin_terms=True, square_terms=(not args.no_square), cross_terms=(not args.no_cross))
+    h.Scale(1., 'width')
     h_err = h.Clone()
 
     hists.append(h)
@@ -189,11 +112,11 @@ for tgt in args.draw:
 
 
 plot.FixTopRange(pads[0], plot.GetPadYMax(pads[0]), 0.30)
-print h_axes[0].GetMinimum(), h_axes[0].GetMaximum()
+print(h_axes[0].GetMinimum(), h_axes[0].GetMaximum())
 if hasattr(hists[0], 'x_edge_list'):
     x_edge_list = hists[0].x_edge_list
     x_label_list = hists[0].x_label_list
-    print x_edge_list
+    print(x_edge_list)
     line = ROOT.TLine()
     text = ROOT.TLatex()
     plot.Set(text, TextAlign=22, TextFont=42, TextSize=0.02)
@@ -201,10 +124,10 @@ if hasattr(hists[0], 'x_edge_list'):
     if args.logy:
         y_height = math.pow(10, math.log10(h_axes[0].GetMinimum()) + 0.1 * (math.log10(h_axes[0].GetMaximum()) - math.log10(h_axes[0].GetMinimum())))
     plot.Set(line, LineStyle=2)
-    for ix in xrange(1, len(x_edge_list) - 1):
+    for ix in range(1, len(x_edge_list) - 1):
         line.DrawLine(x_edge_list[ix], h_axes[0].GetMinimum(), x_edge_list[ix], h_axes[0].GetMaximum())
-    for ix in xrange(len(x_label_list)):
-        print ix, len(x_edge_list), len(x_label_list)
+    for ix in range(len(x_label_list)):
+        print(ix, len(x_edge_list), len(x_label_list))
         text.DrawLatex((x_edge_list[ix + 1] + x_edge_list[ix]) / 2., y_height, '[%g, %g]' % (x_label_list[ix][0], x_label_list[ix][1]))
 
         # plot.DrawVerticalLine(pads[0], line, x_edge)
