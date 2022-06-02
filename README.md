@@ -4,26 +4,6 @@ A tool to automatically parametrize the effect of EFT coefficients on arbitrary 
 
 ---
 
-<!-- MarkdownTOC -->
-
-- [Initial setup](#initial-setup)
-- [Setup models](#setup-models)
-- [Setup Rivet routines](#setup-rivet-routines)
-- [Process-specific workflow](#process-specific-workflow)
-  - [Setup process](#setup-process)
-  - [Prepare Madgraph cards](#prepare-madgraph-cards)
-    - [Config file](#config-file)
-    - [param_card.dat](#param_carddat)
-    - [reweight_card.dat](#reweight_carddat)
-  - [Make the gridpack](#make-the-gridpack)
-  - [Event generation step](#event-generation-step)
-  - [Extract scaling functions](#extract-scaling-functions)
-- [Standalone reweighting](#standalone-reweighting)
-- [Known limitations](#known-limitations)
-
-<!-- /MarkdownTOC -->
-
-
 The assumption is that the cross section for a bin i can be expressed as the sum
 
 ![cross section equation](/resources/docs/sigma_eqn.png)
@@ -108,7 +88,7 @@ add process p p > h vl vl~ / j2 ell+ ell- vl vl~ a h w+ w- NP<=1 @1
 output zh-HEL
 ```
 
-Notes on the `param_card.dat` format:
+Notes on the `proc_card.dat` format:
 
  - A restriction on the number of new physics vertices to be less than one should be applied. In many models this is achieved with adding `NP<=1` at the end of each process, but check the model-specific documentation for guidance. See the **Known limitations** section below for more details.
  - The argument to the `output` command at the end must match the `cards` sub-directory name.
@@ -122,6 +102,8 @@ To initialise this process in Madgraph run
 which creates the directory `MG5_aMC_v2_6_7/zh-HEL`.
 
 For an NLO process (with `[QCD]` in the process definition), use the `setup_process_NLO.sh` script instead.
+
+> :information_source: A process directory can also be located in a subdirectory within `cards`. Some commands must then be adapted, e.g. `./scripts/setup_process.sh mydir/zh-HEL`. The `output [dir]` command in `proc_card.dat` should still give only the final directory, e.g. `zh-HEL`. 
 
 ### Prepare Madgraph cards
 
