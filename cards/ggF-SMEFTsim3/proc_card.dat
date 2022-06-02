@@ -1,5 +1,0 @@
-import model SMEFTsim_topU3l_MwScheme_UFO-massless 
-
-generate g g > H QED=1 NP=2
-
-output ggF-SMEFTsim3
