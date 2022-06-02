@@ -8,7 +8,8 @@ if [[ $# -lt 1 ]]; then
     exit 1
 fi
 
-PROCESS=$1
+PROCESS=$(basename $1)
+CARDDIR=$1
 EXPORTRW=${2-0}
 CORES=${3-0}
 IWD=${PWD}
@@ -17,9 +18,9 @@ IWD=${PWD}
 RUNLABEL="pilotrun"
 ###
 
-cp cards/${PROCESS}/{param,reweight,run,pythia8}_card.dat ${MG_DIR}/${PROCESS}/Cards/
+cp cards/${CARDDIR}/{param,reweight,run,pythia8}_card.dat ${MG_DIR}/${PROCESS}/Cards/
 # Also need to overwrite the default card, or we might lose some options
-cp cards/${PROCESS}/pythia8_card.dat ${MG_DIR}/${PROCESS}/Cards/pythia8_card_default.dat
+cp cards/${CARDDIR}/pythia8_card.dat ${MG_DIR}/${PROCESS}/Cards/pythia8_card_default.dat
 
 pushd ${MG_DIR}/${PROCESS}
 # Create MG config
@@ -64,8 +65,8 @@ pushd "gridpack_${PROCESS}"
 		fi
 	popd
 	rm -r madevent/Events/${RUNLABEL}
-        if [ -e ${IWD}/cards/${PROCESS}/madspin_card.dat ] ; then
-            cp ${IWD}/cards/${PROCESS}/madspin_card.dat ${IWD}/${MG_DIR}/${PROCESS}/Cards/
+        if [ -e ${IWD}/cards/${CARDDIR}/madspin_card.dat ] ; then
+            cp ${IWD}/cards/${CARDDIR}/madspin_card.dat ${IWD}/${MG_DIR}/${PROCESS}/Cards/
             echo "import ../Events/${RUNLABEL}/unweighted_events.lhe.gz" > madspinrun.dat
             cat ${IWD}/${MG_DIR}/${PROCESS}/Cards/madspin_card.dat >> madspinrun.dat
             ${IWD}/${MG_DIR}/MadSpin/madspin madspinrun.dat 
