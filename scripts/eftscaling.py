@@ -1,5 +1,6 @@
 import numpy as np
 import json
+import yaml
 from array import array
 
 def Translate(arg, translations):
@@ -60,6 +61,13 @@ class EFTScaling(object):
         return cls(nbins=d["nbins"], bin_edges=d["bin_edges"], bin_labels=d["bin_labels"], sm_vals=np.array(d["sm_vals"]), terms=[
             EFTTerm.fromJSON(t) for t in d['terms']
         ])
+
+    def parameters(self):
+        res = set()
+        for t in self.terms:
+            for p in t.params:
+                res.add(p)
+        return list(res)
 
     def getScaled(self, hist, coeffs={}, lin_terms=True, square_terms=True, cross_terms=True):
         """Apply to an array or ROOT TH1"""
@@ -169,9 +177,22 @@ class EFTScaling(object):
                     "nbins": int(self.nbins),
                     "sm_vals": self.sm_vals.tolist(),
                     "bin_edges": self.bin_edges,
-                    "bin_labels": self.bin_labels
+                    "bin_labels": self.bin_labels,
+                    "parameters": self.parameters() # this is as a convenience for other scripts, we won't parse it when reading in
                 }
             outfile.write(json.dumps(res, sort_keys=False))
+
+    def writeToYAML(self, filename):
+        with open(filename, 'w') as outfile:
+            res = {
+                "terms": [X.asJSON() for X in self.terms],
+                "nbins": int(self.nbins),
+                "sm_vals": self.sm_vals.tolist(),
+                "bin_edges": self.bin_edges,
+                "bin_labels": self.bin_labels
+            }
+            outfile.write(yaml.safe_dump(res, width=1E6))
+
 
     def writeToTxt(self, filename, translate_txt=dict()):
         txt_out = []

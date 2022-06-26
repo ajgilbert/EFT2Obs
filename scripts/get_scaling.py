@@ -137,7 +137,11 @@ if args.save_raw:
 
 if 'json' in save_formats:
     print('>> Saving histogram parametrisation to %s.json' % args.output)
-    e2oscaling.writeToJSON('%s.json' % args.output)
+    e2oscaling.writeToJSON('%s.json' % args.output, legacy=True)
+
+if 'yaml' in save_formats:
+    print('>> Saving histogram parametrisation to %s.yaml' % args.output)
+    e2oscaling.writeToYAML('%s.yaml' % args.output)
 
 if 'txt' in save_formats:
     print('>> Saving histogram parametrisation to %s.txt' % args.output)
