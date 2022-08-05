@@ -16,4 +16,8 @@ if [ "$DEBUG_SCRIPTS" -eq "1" ]; then
 	set -x
 fi
 
+if [[ ! -z "$PYTHIA8DATA" ]]; then
+        export PYTHIA8DATA=""
+fi
+
 #[[ ":$PYTHONPATH:" != *":$PWD/${MG_DIR}:"* ]] && PYTHONPATH="$PWD/${MG_DIR}:${PYTHONPATH}"
