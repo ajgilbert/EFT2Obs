@@ -16,6 +16,7 @@ parser.add_argument('--exclude-rel', default=None, help="Exclude terms with magn
 parser.add_argument('--rebin', default=None, help="Comma separated list of new bin edges")
 parser.add_argument('--save', default='json', help="Comma separated list of output formats (json, txt, latex)")
 parser.add_argument('--save-raw', action='store_true', help="Save the raw histogram information as JSON, for further processing")
+parser.add_argument('--legacy', action='store_true', help="Use the legacy format for json ouput (if requested)")
 parser.add_argument('--translate-tex', default=None, help="json file to translate parameter names to latex")
 parser.add_argument('--translate-txt', default=None, help="json file to translate parameter names in the text file")
 parser.add_argument('--bin-labels', default=None, help="json file to translate bin labels")
@@ -137,7 +138,7 @@ if args.save_raw:
 
 if 'json' in save_formats:
     print('>> Saving histogram parametrisation to %s.json' % args.output)
-    e2oscaling.writeToJSON('%s.json' % args.output, legacy=True)
+    e2oscaling.writeToJSON('%s.json' % args.output, legacy=args.legacy)
 
 if 'yaml' in save_formats:
     print('>> Saving histogram parametrisation to %s.yaml' % args.output)
