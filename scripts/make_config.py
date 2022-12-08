@@ -15,11 +15,11 @@ parser.add_argument('--def-gen', type=float, default=0.0)
 parser.add_argument('--pars', type=str, nargs='+', help="List of parameters by block, e.g.: block1:1,2,3 block2:4,5,6")
 args = parser.parse_args()
 
-sys.path.append(os.path.join(os.environ['MG_DIR'], args.process, 'bin', 'internal'))
+sys.path.append(os.path.join(os.environ['MG_DIR'], args.process.split('/')[-1], 'bin', 'internal'))
 
 import check_param_card as param_card_mod
 
-param_card_path = '%s/%s/Cards/param_card.dat' % (os.environ['MG_DIR'], args.process)
+param_card_path = '%s/%s/Cards/param_card.dat' % (os.environ['MG_DIR'], args.process.split('/')[-1])
 print '>> Parsing %s to get the list of model parameters' % param_card_path
 
 param_card = param_card_mod.ParamCard(param_card_path)
