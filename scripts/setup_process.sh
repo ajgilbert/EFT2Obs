@@ -11,7 +11,7 @@ fi
 PROCESS=$1
 
 pushd "${MG_DIR}"
-if [ -d "${PROCESS}" ]; then
+if [ -d "${PROCESS##*/}" ]; then
 	echo "Process directory already exists, remove this first to run setup"
 	exit 1
 fi
