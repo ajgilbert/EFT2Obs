@@ -54,7 +54,7 @@ def getParameters(process, model, blocks):
   Find all parameters belonging to blocks and then cross-check with the param card.
   There may be fewer parameters in the param card if a restrict card was used.
   """
-  param_card = param_card_mod.ParamCard(os.path.join(MG_DIR, process, "Cards", "param_card.dat"))
+  param_card = param_card_mod.ParamCard(os.path.join(MG_DIR, process.split('/')[-1], "Cards", "param_card.dat"))
 
   params = []
   for param in model.all_parameters:
@@ -96,7 +96,7 @@ delims = "()-+*/"
 regex = "".join(["\%s|"%delim for delim in delims])[:-1]
 
 def findRelevantParameters1(process, possible_params):
-  with open(os.path.join(MG_DIR, process, "SubProcesses", "coupl.inc"), "r") as f:
+  with open(os.path.join(MG_DIR, process.split('/')[-1], "SubProcesses", "coupl.inc"), "r") as f:
     couplings = []
 
     end = False
@@ -125,7 +125,7 @@ def findRelevantParameters1(process, possible_params):
 
 def getPSFiles(process):
   #assume all directories in SubProcesses folder are subprocesses
-  SubProcesses_path = os.path.join(MG_DIR, process, "SubProcesses")  
+  SubProcesses_path = os.path.join(MG_DIR, process.split('/')[-1], "SubProcesses")  
   subprocesses = os.walk(SubProcesses_path).next()[1]
 
   ps_files = []
