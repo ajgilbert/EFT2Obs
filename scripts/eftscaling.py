@@ -328,7 +328,7 @@ class EFT2ObsHist(object):
         for ib in range(self.nbins()):
             print('Bin %-4i numEntries: %-10i mean: %-10.3g stderr: %-10.3g' % (ib, self.numEntries[0][ib], vals[0][ib], uncerts[0][ib]))
             extra_label = ''
-            if self.bin_labels is not None:
+            if len(self.bin_labels) > 0:
                 extra_label += ', label=%s' % self.bin_labels[ib]
             print('         edges: %s%s' % (self.bin_edges[ib], extra_label))
             print('-' * n_divider)

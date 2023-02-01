@@ -130,6 +130,7 @@ e2ohist = EFT2ObsHist(
     bin_edges=edges,
     bin_labels=bin_labels)
 
+e2ohist.printToScreen()
 e2oscaling = EFTScaling.fromEFT2ObsHist(e2ohist)
 
 if args.save_raw:
