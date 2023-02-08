@@ -204,6 +204,14 @@ Once complete the gridpack `gridpack_zh-HEL.tar.gz` will be copied to the main d
 
 An addtional file, `rw_module_zh-HEL.tar.gz` is also produced. See the section below on standalone reweighting for more information. Note that standalone reweighting with NLO matrix elements is not currently possible.
 
+The full set of options supported by the `make_gridpack.sh` script are:
+
+```sh
+./scripts/make_gridpack.sh [card dir] [make standalone=0/1] [no. cores] [postfit] [extra param/run card settings ...]
+```
+
+Set `no. cores` to 2 or more to use multiple CPU cores in parallel. The `postfix` setting adds an optional extra label to the output: `gridpack_[process][postfix].tar.gz`. All remaining arguments are interpreted as commands that should be passed to Madgraph to modify the param or run cards. For example, `""set htjmin 800"`.
+
 ### Event generation step
 
 Now everything is set up we can proceed to the event generation.
