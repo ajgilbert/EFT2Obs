@@ -33,8 +33,6 @@ pushd ${MG_DIR}/${PROCESS}
   echo "reweight=OFF"
   echo "done"
   echo "set gridpack True"
-  echo "set use_syst False"
-  echo "set systematics_program None"
   for i in "${SETTERS[@]}"; do echo ${i}; done
   echo "done"
 } > mgrunscript
