@@ -271,7 +271,7 @@ In this final step we first merge the yoda output files:
 yodamerge -o test-zh/Rivet.yoda test-zh/Rivet_*
 ```
 
-and then use the script `get_scaling.py` to extract the A_j and B_jk coefficents and their statistical uncertainties:
+and then use the script `get_scaling.py` to extract the A_j and B_jk coefficients and their statistical uncertainties:
 
 ```sh
 python scripts/get_scaling.py -c config_HEL_STXS.json [--nlo] \
@@ -289,6 +289,9 @@ where the options are
  - `--save [json,txt,tex]` a comma separated list of the output formats to save in
  - `--translate-tex` a json dictionary file that converts the parameter names to latex format - only needed when `tex` is chosen in `--save`
  - `--rebin` optionally re-bin the histogram first by providing a list of the new bin edges
+ - `--filter-params` a comma separated list of a subset of the parameters to keep (all others will be dropped)
+ - `--print-style` either "perBin" or "perTerm", which specifies the format for printing to the screen
+ - `--color-above` when using --print-style perTerm, highlight relative uncertainties above this threshold in red
 
 The terms calculated for each bin are printed to the screen, e.g.
 
