@@ -21,6 +21,9 @@ parser.add_argument('--translate-tex', default=None, help="json file to translat
 parser.add_argument('--translate-txt', default=None, help="json file to translate parameter names in the text file")
 parser.add_argument('--bin-labels', default=None, help="json file to translate bin labels")
 parser.add_argument('--nlo', action='store_true', help="Set if weights came from NLO reweighting")
+parser.add_argument('--filter-params', default=None, help="Specify a subset of parameters to include")
+parser.add_argument('--print-style', default="perBin", choices=["perBin", "perTerm"], help="Specify the format for printing to the screen")
+parser.add_argument('--color-above', default=None, type=float, help="When using --print-style perTerm, highlight relative uncertainties above this threshold")
 args = parser.parse_args()
 
 
@@ -57,7 +60,11 @@ hname = args.hist
 aos = yoda.read(args.input, asdict=True)
 
 n_pars = len(pars)
-n_hists = 1 + n_pars * 2 + (n_pars * n_pars - n_pars) / 2
+n_hists = int(1 + n_pars * 2 + (n_pars * n_pars - n_pars) / 2)
+
+filter = list()
+if args.filter_params is not None:
+    filter = args.filter_params.split(',')
 
 hists = []
 for i in range(n_hists):
@@ -130,8 +137,8 @@ e2ohist = EFT2ObsHist(
     bin_edges=edges,
     bin_labels=bin_labels)
 
-e2ohist.printToScreen()
-e2oscaling = EFTScaling.fromEFT2ObsHist(e2ohist)
+e2ohist.printToScreen(style=args.print_style, colorAbove=args.color_above)
+e2oscaling = EFTScaling.fromEFT2ObsHist(e2ohist, filter=filter)
 
 if args.save_raw:
     print('>> Saving EFT2ObsHist as %s_raw.json' % args.output)

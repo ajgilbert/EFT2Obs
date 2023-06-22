@@ -25,7 +25,7 @@ class EFTTerm(object):
         return [self.params, self.val.tolist(), self.uncert.tolist()]
 
     def oldJSONForBin(self, bin):
-        return [self.val[bin], self.uncert[bin]] + list(self.params)
+        return [self.val[bin], self.uncert[bin]] + list(self.params) 
 
 
 class EFTScaling(object):
@@ -38,7 +38,7 @@ class EFTScaling(object):
         self.terms = list(terms)
 
     @classmethod
-    def fromEFT2ObsHist(cls, e2ohist):
+    def fromEFT2ObsHist(cls, e2ohist, filter=list()):
         norm_vals, norm_uncerts = e2ohist.normedBinStats()
         assert(norm_vals.shape[0] == norm_uncerts.shape[0] == len(e2ohist.terms))
         terms = list()
@@ -46,6 +46,12 @@ class EFTScaling(object):
             if len(params) == 1 and params[0] == '1':
                 # Skip the SM point
                 continue
+            do_filter = False
+            for p in set(params):
+                if len(filter) > 0 and p not in filter:
+                    do_filter = True
+            if do_filter:
+                continue 
             terms.append(EFTTerm(params, vals, uncerts))
         terms.sort(key=lambda x : x.sortKey())
         return cls(nbins=len(e2ohist.sumW[0]), bin_edges=e2ohist.bin_edges, bin_labels=e2ohist.bin_labels, sm_vals=e2ohist.sumW[0], terms=terms)
@@ -314,7 +320,7 @@ class EFT2ObsHist(object):
         norm_uncerts = np.divide(uncerts, vals[divide_index], out=np.zeros_like(uncerts), where=vals[divide_index]>0)
         return norm_vals, norm_uncerts
 
-    def printToScreen(self, skip_empty_bins=True, relative=True):
+    def printToScreen(self, skip_empty_bins=True, relative=True, style='perBin', colorAbove=None):
         n_divider = 65
         print('-' * n_divider)
         vals, uncerts = self.binStats()
@@ -325,20 +331,35 @@ class EFT2ObsHist(object):
             norm_uncerts = np.copy(uncerts)
         norm_reluncerts = np.divide(norm_uncerts, norm_vals, out=np.zeros_like(norm_uncerts), where=norm_vals!=0)
 
-        for ib in range(self.nbins()):
-            print('Bin %-4i numEntries: %-10i mean: %-10.3g stderr: %-10.3g' % (ib, self.numEntries[0][ib], vals[0][ib], uncerts[0][ib]))
-            extra_label = ''
-            if len(self.bin_labels) > 0:
-                extra_label += ', label=%s' % self.bin_labels[ib]
-            print('         edges: %s%s' % (self.bin_edges[ib], extra_label))
-            print('-' * n_divider)
-            if skip_empty_bins and self.numEntries[0][ib] == 0:
-                continue
-            print('%-20s | %12s | %12s | %12s' % ('Term', 'Val', 'Uncert', 'Rel. uncert.'))
-            print('-' * n_divider)
-            for ip in range(len(self.terms)):
-                val = norm_vals[ip][ib]
-                uncert = norm_uncerts[ip][ib]
-                reluncert = norm_reluncerts[ip][ib]
-                print('%-20s | %12.4f | %12.4f | %12.4f' % (' * '.join(self.terms[ip]), val, uncert, abs(reluncert)))
-            print('-' * n_divider)
+        if style == "perBin":
+            for ib in range(self.nbins()):
+                print('Bin %-4i numEntries: %-10i mean: %-10.3g stderr: %-10.3g' % (ib, self.numEntries[0][ib], vals[0][ib], uncerts[0][ib]))
+                extra_label = ''
+                if len(self.bin_labels) > 0:
+                    extra_label += ', label=%s' % self.bin_labels[ib]
+                print('         edges: %s%s' % (self.bin_edges[ib], extra_label))
+                print('-' * n_divider)
+                if skip_empty_bins and self.numEntries[0][ib] == 0:
+                    continue
+                print('%-20s | %12s | %12s | %12s' % ('Term', 'Val', 'Uncert', 'Rel. uncert.'))
+                print('-' * n_divider)
+                for ip in range(len(self.terms)):
+                    val = norm_vals[ip][ib]
+                    uncert = norm_uncerts[ip][ib]
+                    reluncert = norm_reluncerts[ip][ib]
+                    print('%-20s | %12.4f | %12.4f | %12.4f' % (' * '.join(self.terms[ip]), val, uncert, abs(reluncert)))
+                print('-' * n_divider)
+        if style == "perTerm":
+            for iT in range(len(self.terms)):
+                if len(set(self.terms[iT])) >= 2:
+                    continue
+                print('Term: {}'.format(' * '.join(self.terms[iT])))
+                print("Val:    " + " ".join(["%9.4f" % X for X in norm_vals[iT]]))
+                print("Uncert: " + " ".join(["%9.4f" % X for X in norm_uncerts[iT]]))
+                colored_reluncerts = []
+                for X in norm_reluncerts[iT]:
+                    if colorAbove is not None and abs(X) > colorAbove:
+                        colored_reluncerts.append("\033[91m%9.4f\033[00m" % abs(X))
+                    else:
+                        colored_reluncerts.append("%9.4f" % abs(X))
+                print("Rel:    " + " ".join(colored_reluncerts))
