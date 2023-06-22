@@ -25,7 +25,7 @@ if [ -d "${MG_DIR}" ]; then
   echo "Directory ${MG_DIR} already exists, remove this first to re-install"
   exit 1
 fi
-wget "https://launchpad.net/mg5amcnlo/2.0/2.6.x/+download/${MG_TARBALL}"
+wget "https://launchpad.net/mg5amcnlo/lts/2.6.x/+download/${MG_TARBALL}"
 tar -zxf "${MG_TARBALL}"
 rm "${MG_TARBALL}"
 
