@@ -204,6 +204,14 @@ Once complete the gridpack `gridpack_zh-HEL.tar.gz` will be copied to the main d
 
 An addtional file, `rw_module_zh-HEL.tar.gz` is also produced. See the section below on standalone reweighting for more information. Note that standalone reweighting with NLO matrix elements is not currently possible.
 
+The full set of options supported by the `make_gridpack.sh` script are:
+
+```sh
+./scripts/make_gridpack.sh [card dir] [make standalone=0/1] [no. cores] [postfit] [extra param/run card settings ...]
+```
+
+Set `no. cores` to 2 or more to use multiple CPU cores in parallel. The `postfix` setting adds an optional extra label to the output: `gridpack_[process][postfix].tar.gz`. All remaining arguments are interpreted as commands that should be passed to Madgraph to modify the param or run cards. For example, `""set htjmin 800"`.
+
 ### Event generation step
 
 Now everything is set up we can proceed to the event generation.
@@ -263,7 +271,7 @@ In this final step we first merge the yoda output files:
 yodamerge -o test-zh/Rivet.yoda test-zh/Rivet_*
 ```
 
-and then use the script `get_scaling.py` to extract the A_j and B_jk coefficents and their statistical uncertainties:
+and then use the script `get_scaling.py` to extract the A_j and B_jk coefficients and their statistical uncertainties:
 
 ```sh
 python scripts/get_scaling.py -c config_HEL_STXS.json [--nlo] \
@@ -281,6 +289,9 @@ where the options are
  - `--save [json,txt,tex]` a comma separated list of the output formats to save in
  - `--translate-tex` a json dictionary file that converts the parameter names to latex format - only needed when `tex` is chosen in `--save`
  - `--rebin` optionally re-bin the histogram first by providing a list of the new bin edges
+ - `--filter-params` a comma separated list of a subset of the parameters to keep (all others will be dropped)
+ - `--print-style` either "perBin" or "perTerm", which specifies the format for printing to the screen
+ - `--color-above` when using --print-style perTerm, highlight relative uncertainties above this threshold in red
 
 The terms calculated for each bin are printed to the screen, e.g.
 

@@ -12,6 +12,9 @@ PROCESS=$(basename $1)
 CARDDIR=$1
 EXPORTRW=${2-0}
 CORES=${3-0}
+POSTFIX=${4-""}
+ALLARGS=("$@")
+SETTERS=( "${ALLARGS[@]:4}" )
 IWD=${PWD}
 
 ### SET ENVIRONMENT VARIABLES HERE
@@ -24,11 +27,13 @@ cp cards/${CARDDIR}/pythia8_card.dat ${MG_DIR}/${PROCESS}/Cards/pythia8_card_def
 
 pushd ${MG_DIR}/${PROCESS}
 # Create MG config
+
 {
   echo "shower=OFF"
   echo "reweight=OFF"
   echo "done"
   echo "set gridpack True"
+  for i in "${SETTERS[@]}"; do echo ${i}; done
   echo "done"
 } > mgrunscript
 
@@ -80,9 +85,9 @@ pushd "gridpack_${PROCESS}"
 popd
 
 rm -r "gridpack_${PROCESS}"
-cp "gridpack_${PROCESS}.tar.gz" "${IWD}/gridpack_${PROCESS}.tar.gz"
+cp "gridpack_${PROCESS}.tar.gz" "${IWD}/gridpack_${PROCESS}${POSTFIX}.tar.gz"
+rm "gridpack_${PROCESS}.tar.gz"
 
-# cp "${RUNLABEL}_gridpack.tar.gz" "${IWD}/gridpack_${PROCESS}.tar.gz"
 popd
 
-echo ">> Gridpack ${IWD}/gridpack_${PROCESS}.tar.gz has been successfully created"
+echo ">> Gridpack ${IWD}/gridpack_${PROCESS}${POSTFIX}.tar.gz has been successfully created"
