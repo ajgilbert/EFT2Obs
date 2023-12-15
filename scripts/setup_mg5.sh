@@ -53,7 +53,7 @@ pushd "${MG_DIR}"
 		patch MG5aMC_PY8_interface.cc "${IWD}/setup/MG5aMC_PY8_interface.cc.patch"
 		patch MG5aMC_PY8_interface.cc "${IWD}/setup/corrector_MG5aMC_PY8_interface.cc.patch"
 		ln -s "${IWD}/setup/WeightCorrector.h" ./
-		python compile.py ../pythia8
+		python3 compile.py ../pythia8
 	popd
 	pushd HEPTools/pythia8/include/Pythia8Plugins
 		ln -s "${IWD}/setup/WeightCorrector.h" ./
