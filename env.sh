@@ -5,7 +5,7 @@ export PYTHONPATH="${PWD}/$(echo lhapdf/lib64/python*/site-packages):${PYTHONPAT
 export LD_LIBRARY_PATH="${PWD}/lhapdf/lib:${LD_LIBRARY_PATH}"
 export RIVET_ANALYSIS_PATH=${PWD}/RivetPlugins
 export MG_DIR="MG5_aMC_v2_9_16"
-export MG_TARBALL="MG5aMC_LTS_v2.9.16.tar.gz"
+export MG_TARBALL="MG5_aMC_v2.9.16.tar.gz"
 export RIVET_VERSION="3.1.3"
 export DEBUG_SCRIPTS=0
 
