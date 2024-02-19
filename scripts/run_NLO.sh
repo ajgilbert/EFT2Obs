@@ -10,7 +10,9 @@ SEED=$2
 
 ### SET ENVIRONMENT VARIABLES HERE
 RUNLABEL="GridRun"
+
 {
+  echo "generate_events -oxR --nb_core=1 -n ${RUNLABEL}"
   echo "shower=ON"
   echo "reweight=ON"
   echo "done"
@@ -19,4 +21,4 @@ RUNLABEL="GridRun"
   echo "done"
 } > mgrunscript
 
-./bin/generate_events aMC@NLO -oxR --nb_core=1 -n ${RUNLABEL} < mgrunscript
+./bin/aMCatNLO < mgrunscript

@@ -1,0 +1,9 @@
+import model SMEFTsim_topU3l_MwScheme_UFO-massless  
+
+define lep = mu+ mu- e+ e-
+define nu = vm vm~ ve ve~
+
+generate p p > lep nu a NP<=1 @1
+# add process p p > lep nu a j NP<=1 @2
+
+output WG-LO
