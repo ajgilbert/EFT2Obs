@@ -1,3 +1,8 @@
+from __future__ import print_function
+from builtins import str
+from builtins import zip
+from builtins import range
+from builtins import object
 import sys
 import os
 import ROOT
@@ -8,6 +13,7 @@ import math
 import json
 import numpy
 import copy
+from glob import glob
 from collections import defaultdict
 
 
@@ -49,7 +55,7 @@ def stdchannel_redirected(stdchannel, dest_filename):
             dest_file.close()
 
 
-class StandaloneReweight:
+class StandaloneReweight(object):
 
     def __init__(self, rw_pack, no_match_behaviour='sm weights'):
         self.mode = 0
@@ -70,9 +76,9 @@ class StandaloneReweight:
         self.parVals = [X['val'] for X in self.cfg['parameters']]
         self.pars = [X['name'] for X in self.cfg['parameters']]
 
-        self.N = 1 + self.Npars * 2 + (self.Npars * self.Npars - self.Npars) / 2
+        self.N = int(1 + self.Npars * 2 + (self.Npars * self.Npars - self.Npars) / 2)
 
-        print '>> %i parameters, %i reweight points' % (self.Npars, self.N)
+        print('>> %i parameters, %i reweight points' % (self.Npars, self.N))
         self.checkNLO()
         if self.nlo:
             print(">> NLO Reweighting")
@@ -82,9 +88,10 @@ class StandaloneReweight:
         self.InitModules()
 
         rw_me = self.mods[0]
+        rw_me = self.full_mod
         ## The following code adapted from Madgraph, rweight_interface.py: L1770
-        self.all_pdgs = [[pdg for pdg in pdgs if pdg!=0] for pdgs in rw_me.get_pdg_order()]
-        self.all_prefix = [''.join(j).strip().lower() for j in rw_me.get_prefix()]
+        self.all_pdgs = [[pdg for pdg in pdgs if pdg!=0] for pdgs in rw_me.get_pdg_order()[0]]
+        self.all_prefix = [''.join([X.decode() for X in j]).strip().lower() for j in rw_me.get_prefix()]
         prefix_set = set(self.all_prefix)
 
         # Prepare the helicity dict
@@ -107,10 +114,10 @@ class StandaloneReweight:
         for pdglist in self.all_pdgs:
             self.sorted_pdgs.append(self.SortPDGs(pdglist))
 
-        print '>> StandaloneReweight class initialized'
-        print '>> Accepted PDG lists:'
+        print('>> StandaloneReweight class initialized')
+        print('>> Accepted PDG lists:')
         for pdgs in self.all_pdgs:
-            print '   - %s' % pdgs
+            print('   - %s' % pdgs)
         # print self.hel_dict
         # print self.all_pdgs
         # print self.sorted_pdgs
@@ -139,6 +146,7 @@ class StandaloneReweight:
 
         subproc_dir = os.path.join(self.target_dir, 'rwgt', self.onedir, 'SubProcesses')
         sys.path.append(subproc_dir)
+        self.full_mod = None
         self.mods = []
 
         if self.mode == 0:
@@ -153,21 +161,23 @@ class StandaloneReweight:
                 print '>> Reusing working directory %s' % self.target_dir
             """
             os.chdir(subproc_dir)
-            for i in range(self.N):
+            self.full_mod = imp.load_module('allmatrix3py', *imp.find_module('allmatrix3py'))
+            module_lib = glob("all_matrix3py*.so")[0]
+            for i in range(int(self.N)):
                 try:
                     os.mkdir('rwdir_%i' % i)
                 except:
                     pass
-                subprocess.check_call(['cp', 'allmatrix2py.so', 'rwdir_%i/allmatrix2py.so' % i])
+                subprocess.check_call(['cp', module_lib, 'rwdir_%i/%s' % (i, module_lib)])
             os.chdir(iwd)
 
             os.chdir(subproc_dir)
 
-            for i in xrange(self.N):
+            for i in range(int(self.N)):
                 sys.path[-1] = '%s/rwdir_%i' % (subproc_dir, i)
                 # print imp.find_module('allmatrix2py')
-                self.mods.append(imp.load_module('allmatrix2py', *imp.find_module('allmatrix2py')))
-                del sys.modules['allmatrix2py']
+                self.mods.append(imp.load_module('all_matrix3py', *imp.find_module('all_matrix3py')))
+                del sys.modules['all_matrix3py']
                 self.mods[-1].initialise('%s/param_card_%i.dat' % (self.target_dir, i))
                 if hasattr(self.mods[-1], 'set_madloop_path'):
                     self.mods[-1].set_madloop_path(os.path.join(subproc_dir, 'MadLoop5_resources'))
@@ -175,22 +185,22 @@ class StandaloneReweight:
             os.chdir(iwd)
         elif self.mode == 1:
             os.chdir(subproc_dir)
-            self.mods.append(imp.load_module('allmatrix2py', *imp.find_module('allmatrix2py')))
+            self.mods.append(imp.load_module('allmatrix3py', *imp.find_module('all_matrix3py')))
             mod = self.mods[0]
             if hasattr(mod, 'set_madloop_path'):
                 mod.set_madloop_path(os.path.join(subproc_dir, 'MadLoop5_resources'))
             self.references = {}
 
             for block in self.tocache:
-                print '>>> %s' % block
+                print('>>> %s' % block)
                 self.references[block] = []
                 self.caches[block] = []
                 fortran_dict = getattr(mod, block).__dict__
-                for key, val in fortran_dict.iteritems():
+                for key, val in fortran_dict.items():
                     self.references[block].append((key, val))
                 # print self.references[block]
 
-            for i in xrange(self.N):
+            for i in range(self.N):
                 mod.initialise('%s/param_card_%i.dat' % (self.target_dir, i))
                 for block in self.tocache:
                     cache = []
@@ -327,7 +337,7 @@ class StandaloneReweight:
         nParts = len(parts)
         nInits = 0 #count number of incoming particles
         selected_pdgs = []
-        for ip in xrange(nParts):
+        for ip in range(nParts):
             if stats[ip] not in [-1, 1]:
                 continue
             selected_pdgs.append(pdgs[ip])
@@ -344,20 +354,20 @@ class StandaloneReweight:
         try:
             idx = self.sorted_pdgs.index(evt_sorted_pdgs)
         except ValueError:
-            print '>> Event with PDGs %s does not match any known process' % pdgs
+            print('>> Event with PDGs %s does not match any known process' % pdgs)
             return res
 
         target_pdgs = self.all_pdgs[idx]
 
         reorder_pids = []
-        for ip in xrange(len(target_pdgs)):
+        for ip in range(len(target_pdgs)):
             target = target_pdgs[ip]
             if ip < nInits:
                 reorder_pids.append(init_pdg_dict[target].pop(0))
             else:
                 reorder_pids.append(fnal_pdg_dict[target].pop(0))
         if verb:
-            print '>> Event layout is %s, matching target layout %s => ordering is %s' % (selected_pdgs, target_pdgs, reorder_pids)
+            print('>> Event layout is %s, matching target layout %s => ordering is %s' % (selected_pdgs, target_pdgs, reorder_pids))
 
         final_pdgs = []
         final_parts = []
@@ -370,7 +380,7 @@ class StandaloneReweight:
 
         com_final_parts = []
         if nInits == 1:
-            pboost = [final_parts[0][i] for i in xrange(4)]
+            pboost = [final_parts[0][i] for i in range(4)]
         elif nInits == 2:
             pboost = [final_parts[0][i] + final_parts[1][i] for i in range(4)]
         else:
@@ -393,18 +403,19 @@ class StandaloneReweight:
             if t_final_hels in hel_dict:
                 nhel = hel_dict[t_final_hels]
                 if verb:
-                    print '>> Selected nhel=%i, from dict %s' % (nhel, self.all_prefix[idx])
+                    print('>> Selected nhel=%i, from dict %s' % (nhel, self.all_prefix[idx]))
             else:
-                print '>> Helicity configuration %s was not found in dict, using -1' % final_hels
+                print('>> Helicity configuration %s was not found in dict, using -1' % final_hels)
         scale2 = 0.
         val_ref = 1.0
-        for iw in xrange(self.N):
+        for iw in range(self.N):
             if self.mode == 0:
                 with stdchannel_redirected(sys.stdout, os.devnull): #prevent MadLoop output
-                    val = self.mods[iw].smatrixhel(final_pdgs, final_parts_i, alphas, scale2, nhel)
+                  #smatrixhel(pdgs,procid,p,alphas,scale2,nhel,npdg=len(pdgs))
+                    val = self.mods[iw].smatrixhel(final_pdgs, -1, final_parts_i, alphas, scale2, nhel)
             elif self.mode == 1:
                 self.RestoreCache(iw)
-                val = self.mods[0].smatrixhel(final_pdgs, final_parts_i, alphas, scale2, nhel)
+                val = self.mods[0].smatrixhel(final_pdgs, -1, final_parts_i, alphas, scale2, nhel)
             if self.nlo:
                 val = val[0]
             if iw == 0:
@@ -416,41 +427,41 @@ class StandaloneReweight:
         N = len(raw_weights)
         verb = 0
         if verb > 0:
-            print "-- Have %i weights" % N
+            print("-- Have %i weights" % N)
         out = [0.] * len(raw_weights)
         out_unscaled = [0.] * len(raw_weights)
         Npars = self.Npars
-        for i in xrange(N):
+        for i in range(N):
             if verb > 0:
-                print " - %f" % raw_weights[i]
+                print(" - %f" % raw_weights[i])
             out[i] = raw_weights[i]
             out_unscaled[i] = raw_weights[i]
 
-        for ip in xrange(Npars):
+        for ip in range(Npars):
             s0 = raw_weights[0]
             s1 = raw_weights[ip * 2 + 1]
             s2 = raw_weights[ip * 2 + 2]
             if verb > 0:
-                print " -- Doing %i" % ip
-                print "%f\t%f\t%f" % (s0, s1, s2)
+                print(" -- Doing %i" % ip)
+                print("%f\t%f\t%f" % (s0, s1, s2))
             s1 -= s0
             s2 -= s0
             if verb > 0:
-                print " - subtract s0: %f\t%f" % (s1, s2)
+                print(" - subtract s0: %f\t%f" % (s1, s2))
             Ai = 4. * s1 - s2
             Bii = s2 - Ai
             if verb > 0:
-                print " - Result: %f\t%f" % (Ai, Bii)
+                print(" - Result: %f\t%f" % (Ai, Bii))
             out[ip * 2 + 1] = Ai
             out[ip * 2 + 2] = Bii
             out_unscaled[ip * 2 + 1] = (Ai / self.parVals[ip])
             out_unscaled[ip * 2 + 2] = (Bii / (self.parVals[ip] * self.parVals[ip]))
         crossed_offset = 1 + 2 * Npars
         c_counter = 0
-        for ix in xrange(0, Npars):
-            for iy in xrange(ix + 1, Npars):
+        for ix in range(0, Npars):
+            for iy in range(ix + 1, Npars):
                 if verb > 0:
-                    print " -- Doing %i\t%i\t[%i]" % (ix, iy, crossed_offset + c_counter)
+                    print(" -- Doing %i\t%i\t[%i]" % (ix, iy, crossed_offset + c_counter))
                 s = raw_weights[crossed_offset + c_counter]
                 sm = raw_weights[0]
                 sx = out[ix * 2 + 1]
@@ -461,7 +472,7 @@ class StandaloneReweight:
                 out[crossed_offset + c_counter] = s
                 out_unscaled[crossed_offset + c_counter] = s / (self.parVals[ix] * self.parVals[iy])
                 if verb > 0:
-                    print " - Result: %f" % s
+                    print(" - Result: %f" % s)
                 c_counter += 1
 
         return out_unscaled
@@ -469,7 +480,7 @@ class StandaloneReweight:
     def CalculateWeight(self, transformed_weights, **kwargs):
         # print kwargs
         wt = transformed_weights[0]
-        for i in xrange(self.Npars):
+        for i in range(self.Npars):
             par = self.pars[i]
             if par in kwargs:
                 # print transformed_weights[i * 2 + 1], transformed_weights[i * 2 + 2]
@@ -477,8 +488,8 @@ class StandaloneReweight:
                 wt += transformed_weights[i * 2 + 2] * kwargs[par] * kwargs[par]
         crossed_offset = 1 + 2 * self.Npars
         c_counter = 0
-        for ix in xrange(0, self.Npars):
-            for iy in xrange(ix + 1, self.Npars):
+        for ix in range(0, self.Npars):
+            for iy in range(ix + 1, self.Npars):
                 if self.pars[ix] in kwargs and self.pars[iy] in kwargs:
                     # print transformed_weights[crossed_offset + c_counter] 
                     wt += transformed_weights[crossed_offset + c_counter] * kwargs[self.pars[ix]] * kwargs[self.pars[iy]]
@@ -520,7 +531,7 @@ if __name__ == '__main__':
     # weightgroup.attributes['weight_name_strategy'] = "includeIdInWeightName"
     writer.heprup.weightgroup.push_back(weightgroup)
 
-    for iw in xrange(rw.N):
+    for iw in range(rw.N):
         weightinfo = ROOT.LHEF.WeightInfo()
         weightinfo.name = 'rw%.4i' % iw
         weightinfo.inGroup = 0
@@ -539,9 +550,9 @@ if __name__ == '__main__':
         writer.hepeup = reader.hepeup
         existing = []
         if args.validate:
-            print '>> Reading %i existing weights' % (writer.hepeup.weights.size() - 1)
+            print('>> Reading %i existing weights' % (writer.hepeup.weights.size() - 1))
             # The first weight is the original weight - we should skip it
-            for iorig in xrange(1, writer.hepeup.weights.size()):
+            for iorig in range(1, writer.hepeup.weights.size()):
                 existing.append(writer.hepeup.weights[iorig].first)
         writer.hepeup.namedweights.clear()
         writer.hepeup.weights.clear()
@@ -551,7 +562,7 @@ if __name__ == '__main__':
         hels = []
         stats = []
         nParts = writer.hepeup.NUP
-        for ip in xrange(nParts):
+        for ip in range(nParts):
             # Put in EPxPyPz format
             parts.append([writer.hepeup.PUP[ip][3], writer.hepeup.PUP[ip][0], writer.hepeup.PUP[ip][1], writer.hepeup.PUP[ip][2]])
             pdgs.append(int(writer.hepeup.IDUP[ip]))
@@ -566,8 +577,8 @@ if __name__ == '__main__':
         # print rw.CalculateWeight(trans_res, ca=0.01, c3w=0.01)
 
         if args.validate:
-            for iw in xrange(min(len(existing), len(res))):
-                print '%-10f %-10f %-10f | %-10f' % (existing[iw] / existing[0], res[iw], res[iw] / (existing[iw] / existing[0]), trans_res[iw])
+            for iw in range(min(len(existing), len(res))):
+                print('%-10f %-10f %-10f | %-10f' % (existing[iw] / existing[0], res[iw], res[iw] / (existing[iw] / existing[0]), trans_res[iw]))
 
         for iw, wt in enumerate(res):
             weight = ROOT.LHEF.Weight()
