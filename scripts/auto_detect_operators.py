@@ -26,7 +26,10 @@ searched for in the UFO model. Since this parameter is a function of other param
 the script recusively searches through the parameters to find which Wilson coefficients
 change the value of dWH.
 """
+from __future__ import print_function
 
+from builtins import next
+from builtins import str
 import sys
 import os
 import importlib
@@ -46,6 +49,7 @@ def loadModel(process):
     model_name = f.readline().strip("\n").split("import model")[1].split("-")[0].strip(" ")
   
   print(">> Loading model: %s"%model_name)  
+  sys.path.append(os.path.join(MG_DIR, "models", model_name))
   model = importlib.import_module(model_name)
   return model
 
@@ -61,10 +65,10 @@ def getParameters(process, model, blocks):
     block = param.lhablock
     if block in blocks:
       #check that this block exists in param card
-      assert block.lower() in param_card.keys() #block names appear in lower case in param card
+      assert block.lower() in list(param_card.keys()) #block names appear in lower case in param card
       
       #if this param in param card
-      if (param.lhacode[0],) in param_card[block.lower()].keys():
+      if (param.lhacode[0],) in list(param_card[block.lower()].keys()):
         params.append(param.name)
   return params
 
@@ -125,13 +129,13 @@ def findRelevantParameters1(process, possible_params):
 
 def getPSFiles(process):
   #assume all directories in SubProcesses folder are subprocesses
-  SubProcesses_path = os.path.join(MG_DIR, process.split('/')[-1], "SubProcesses")  
-  subprocesses = os.walk(SubProcesses_path).next()[1]
+  SubProcesses_path = os.path.join(MG_DIR, process.split('/')[-1], "SubProcesses")
+  subprocesses = next(os.walk(SubProcesses_path))[1]
 
   ps_files = []
   for subprocess in subprocesses:
     path = os.path.join(SubProcesses_path, subprocess)
-    ps_files_in_subprocess = filter(lambda x: x[-3:]==".ps", os.listdir(path))
+    ps_files_in_subprocess = [x for x in os.listdir(path) if x[-3:]==".ps"]
     ps_files.extend([os.path.join(path,ps_file) for ps_file in ps_files_in_subprocess])
 
   return ps_files
@@ -207,7 +211,7 @@ def expandParameters(params, model, level=0):
       new_params.append(param)
     else:
       maybe_params = re.split(regex, value.replace(" ", ""))
-      filtered_params = set(filter(lambda x: hasattr(model.parameters, x), maybe_params)) 
+      filtered_params = set([x for x in maybe_params if hasattr(model.parameters, x)]) 
       new_params.extend(expandParameters(filtered_params, model, level+1))
   return new_params
 

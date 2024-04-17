@@ -1,3 +1,4 @@
+from __future__ import print_function
 import argparse
 import os
 import sys
@@ -20,7 +21,7 @@ sys.path.append(os.path.join(os.environ['MG_DIR'], args.process.split('/')[-1], 
 import check_param_card as param_card_mod
 
 param_card_path = '%s/%s/Cards/param_card.dat' % (os.environ['MG_DIR'], args.process.split('/')[-1])
-print '>> Parsing %s to get the list of model parameters' % param_card_path
+print('>> Parsing %s to get the list of model parameters' % param_card_path)
 
 param_card = param_card_mod.ParamCard(param_card_path)
 
@@ -54,22 +55,22 @@ if len(args.pars) == 1:
 for parset in args.pars:
     if ':' in parset:
         block = parset.split(':')[0]
-        ids = [X[0] for X in param_card[block].keys()]
+        ids = [X[0] for X in list(param_card[block].keys())]
         userpars = [int(X) for X in parset.split(':')[1].split(',')]
     else:
         block = parset
-        ids = [X[0] for X in param_card[block].keys()]
+        ids = [X[0] for X in list(param_card[block].keys())]
         userpars = list(ids)
 
     output['blocks'].append(block)
-    print '>> Selecting %i/%i parameters in block %s:' % (len(userpars), len(ids), block)
+    print('>> Selecting %i/%i parameters in block %s:' % (len(userpars), len(ids), block))
 
     if len(args.pars) == 1:
         output['parameter_defaults']['block'] = block
 
     for i in userpars:
         if i not in ids:
-            print '>> The index %i in block %s was requested, but not found' % (i, block)
+            print('>> The index %i in block %s was requested, but not found' % (i, block))
             continue
         par = param_card[block].param_dict[(i,)]
         output['parameters'].append({
@@ -78,7 +79,7 @@ for parset in args.pars:
             })
         if len(args.pars) > 1:
             output['parameters'][-1]['block'] = block
-        print '    - [%i] %s' % (output['parameters'][-1]['index'], output['parameters'][-1]['name'])
+        print('    - [%i] %s' % (output['parameters'][-1]['index'], output['parameters'][-1]['name']))
 
 
 if args.set_inactive is not None:
@@ -97,7 +98,7 @@ if args.set_inactive is not None:
                 })
 
 
-print '>> Writing config file %s' % args.output
+print('>> Writing config file %s' % args.output)
 
 with open(args.output, 'w') as outfile:
         outfile.write(json.dumps(output, sort_keys=True, indent=4, separators=(',', ': ')))

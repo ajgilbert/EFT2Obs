@@ -1,3 +1,6 @@
+from __future__ import print_function
+from builtins import zip
+from builtins import range
 import json
 import sys
 import argparse
@@ -42,7 +45,7 @@ current_i = 0
 output.extend(PrintBlock(pars, initvals, current_i))
 current_i += 1
 
-for i in xrange(len(pars)):
+for i in range(len(pars)):
     vals = list(initvals)
     vals[i] = (pars[i]['val'] + initvals[i]) / 2.
     output.extend(PrintBlock(pars, vals, current_i))
@@ -51,8 +54,8 @@ for i in xrange(len(pars)):
     output.extend(PrintBlock(pars, vals, current_i))
     current_i += 1
 
-for i in xrange(len(pars)):
-    for j in xrange(i + 1, len(pars)):
+for i in range(len(pars)):
+    for j in range(i + 1, len(pars)):
         # print i,j
         vals = list(initvals)
         vals[i] = pars[i]['val']
@@ -64,4 +67,4 @@ for i in xrange(len(pars)):
 with open(args.output, 'w') as outfile:
         outfile.write('\n'.join(output))
 
-print '>> Created %s with %i reweighting points' % (args.output, current_i)
+print('>> Created %s with %i reweighting points' % (args.output, current_i))

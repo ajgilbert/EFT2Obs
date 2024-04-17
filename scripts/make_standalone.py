@@ -1,3 +1,5 @@
+from __future__ import print_function
+from builtins import range
 import json
 import sys
 import os
@@ -36,7 +38,7 @@ import check_param_card as param_card_mod
 cfg = tools.GetConfigFile(args.config)
 
 param_card_path = 'cards/%s/param_card.dat' % process
-print '>> Parsing %s' % param_card_path
+print('>> Parsing %s' % param_card_path)
 param_card = param_card_mod.ParamCard(param_card_path)
 
 
@@ -47,7 +49,7 @@ current_i = 0
 param_card.write('%s/param_card_%i.dat' % (args.output, current_i))
 current_i += 1
 
-for i in xrange(len(pars)):
+for i in range(len(pars)):
     vals = list(initvals)
     vals[i] = (pars[i]['val'] + initvals[i]) / 2.
 
@@ -63,8 +65,8 @@ for i in xrange(len(pars)):
     param_card.write('%s/param_card_%i.dat' % (args.output, current_i))
     current_i += 1
 
-for i in xrange(len(pars)):
-    for j in xrange(i + 1, len(pars)):
+for i in range(len(pars)):
+    for j in range(i + 1, len(pars)):
         vals = list(initvals)
         vals[i] = pars[i]['val']
         vals[j] = pars[j]['val']
@@ -74,4 +76,4 @@ for i in xrange(len(pars)):
         param_card.write('%s/param_card_%i.dat' % (args.output, current_i))
         current_i += 1
 
-print '>> Created %s with %i reweighting points' % (args.output, current_i)
+print('>> Created %s with %i reweighting points' % (args.output, current_i))

@@ -16,7 +16,11 @@ To run do:
 <VERB> = 1 -> Prints out event that fail
 <VERB> = 2 -> Prints out all events
 """
+from __future__ import print_function
 
+from builtins import next
+from builtins import str
+from builtins import range
 import sys
 import lhe_interface
 import numpy as np
