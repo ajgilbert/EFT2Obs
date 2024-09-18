@@ -22,6 +22,15 @@ Note that this workflow has only been tested on lxplus so far, and for CMS users
 
 Follow these steps to set up and install the relevant software packages.
 
+### Software environment
+
+EFT2Obs is only officially supported on EL9/AlmaLinux9 (i.e. the current default lxplus at CERN).
+It is recommended to use one of the following software environments, accessible via cvmfs:
+
+ - LCG: `. /cvmfs/sft.cern.ch/lcg/views/LCG_106/x86_64-el9-gcc13-opt/setup.sh`
+ - CMSSW: `CMSSW_14_1_0_pre4`
+
+
 Clone the EFT2Obs repository and source the `env.sh` script which sets a number of useful environment variables:
 
 ```sh
@@ -30,7 +39,7 @@ cd EFT2Obs
 source env.sh
 ```
 
-The `env.sh` script should be sourced at the start of each new session.
+The `env.sh` script should be sourced at the start of each new session, after sourcing the main software environment.
 
 Then run the following scripts to download and install LHAPDF, Madgraph_aMC@NLO, Pythia and Rivet. Note this may take some time to complete.
 
