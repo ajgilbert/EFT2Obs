@@ -103,7 +103,7 @@ class Jobs(object):
                            help='Print commands to the screen but do not run them')
         group.add_argument('--cwd', type=int, default=1,
                            help='Switch to the submission directory within the job')
-        group.add_argument('--sub-opts', default=self.bopts,
+        group.add_argument('--sub-opts', default=self.bopts, type=str,
                            help='Options for batch submission')
         group.add_argument('--memory', type=int,
                            help='Request memory for job [MB]')
@@ -223,7 +223,7 @@ class Jobs(object):
             for i, j in enumerate(range(0, len(self.job_queue), self.merge)):
                 njobs += 1
                 script_name = 'job_%s_%i.sh' % (self.task_name, i)
-                if self.task_dir is not '':
+                if self.task_dir != '':
                     script_name = os.path.join(self.task_dir, script_name)
                 status = 'unknown'
                 if self.tracking:
@@ -270,7 +270,7 @@ class Jobs(object):
         if self.job_mode == 'condor':
             outscriptname = 'condor_%s.sh' % self.task_name
             subfilename = 'condor_%s.sub' % self.task_name
-            if self.task_dir is not '':
+            if self.task_dir != '':
                 outscriptname = os.path.join(self.task_dir, outscriptname)
                 subfilename = os.path.join(self.task_dir, subfilename)
             print('>> condor job script will be %s' % outscriptname)
@@ -293,7 +293,7 @@ class Jobs(object):
               'EXE': outscriptname,
               'TASK': self.task_name,
               'TASKDIR': os.path.join(self.task_dir, ''),
-              'EXTRA': self.bopts.decode('string_escape'),
+              'EXTRA': self.bopts.encode("UTF-8").decode("unicode_escape"),
               'NUMBER': jobs
             }
             subfile.write(condor_settings)

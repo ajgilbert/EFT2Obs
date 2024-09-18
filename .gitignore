@@ -28,3 +28,5 @@ LHAPDF-*/
 *.tar.gz
 mgconfigscript
 cards/fitting-exercise
+rw_*/
+test-*/
