@@ -21,6 +21,10 @@ cp cards/${PROCESS}/{param,reweight,run,shower}_card.dat ${MG_DIR}/${PROCESS}/Ca
 # cp cards/${PROCESS}/pythia8_card.dat ${MG_DIR}/${PROCESS}/Cards/pythia8_card_default.dat
 
 pushd ${MG_DIR}/${PROCESS}
+
+# This next line is to fix a new problem that causes the reweighting to fail
+cp MGMEVersion.txt bin/
+
 # Create MG config
 {
   echo "shower=ON"

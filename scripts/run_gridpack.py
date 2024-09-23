@@ -1,3 +1,4 @@
+from __future__ import print_function
 import argparse
 import subprocess
 import os
@@ -36,7 +37,7 @@ def ResolvePath(pathname, relbase):
 
 def MaybeMakeDir(pathname):
     if not os.path.isdir(pathname) and not os.path.isfile(pathname):
-        print '>> Creating directory %s' % pathname
+        print('>> Creating directory %s' % pathname)
         subprocess.check_call(['mkdir', '-p', pathname])
 
 
@@ -51,7 +52,7 @@ outdir = ResolvePath(args.outdir, args.launch_dir)
 MaybeMakeDir(outdir)
 
 gridpack = ResolvePath(args.gridpack, args.launch_dir)
-print '>> Writing yoda output to %s' % outdir
+print('>> Writing yoda output to %s' % outdir)
 
 events = args.events
 seed = args.seed
@@ -63,26 +64,26 @@ load_hepmc = args.load_hepmc
 if save_lhe is not None:
     save_lhe = ResolvePath(save_lhe, args.launch_dir)
     MaybeMakeDir(save_lhe)
-    print '>> Saving LHE output to %s' % save_lhe
+    print('>> Saving LHE output to %s' % save_lhe)
 if load_lhe is not None:
     load_lhe = ResolvePath(load_lhe, args.launch_dir)
-    print '>> Loading LHE input from %s' % load_lhe
+    print('>> Loading LHE input from %s' % load_lhe)
 if save_hepmc is not None:
     save_hepmc = ResolvePath(save_hepmc, args.launch_dir)
     MaybeMakeDir(save_hepmc)
-    print '>> Saving HepMC output to %s' % save_hepmc
+    print('>> Saving HepMC output to %s' % save_hepmc)
 if load_hepmc is not None:
     load_hepmc = ResolvePath(load_hepmc, args.launch_dir)
-    print '>> Loading HepMC input from %s' % load_hepmc
+    print('>> Loading HepMC input from %s' % load_hepmc)
 ignore_beams = args.rivet_ignore_beams
 
 # Check if TMPDIR is set
 if 'TMPDIR' not in os.environ:
-    tmpdir = subprocess.check_output(['mktemp', '-d']).strip()
-    print '>> No TMPDIR was set, created %s' % tmpdir
+    tmpdir = subprocess.check_output(['mktemp', '-d']).strip().decode()
+    print('>> No TMPDIR was set, created %s' % tmpdir)
 else:
     tmpdir = os.environ['TMPDIR']
-    print '>> TMPDIR is set to %s' % tmpdir
+    print('>> TMPDIR is set to %s' % tmpdir)
 
 gridpack_dir = tmpdir+'/gridpack_run_%i' % seed
 
@@ -94,7 +95,7 @@ finished = False
 # Can skip untarring the gridpack if we're going to read straight from existing hepMC
 if load_hepmc is None:
     os.mkdir(gridpack_dir)
-    print '>> Untarring gridpack %s into %s' % (gridpack, gridpack_dir)
+    print('>> Untarring gridpack %s into %s' % (gridpack, gridpack_dir))
     subprocess.check_call(['tar', '-xf', gridpack, '-C', '%s/' % gridpack_dir])
 
     # sys.exit(0)

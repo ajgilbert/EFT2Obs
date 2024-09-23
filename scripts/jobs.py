@@ -1,3 +1,6 @@
+from __future__ import print_function
+from builtins import range
+from builtins import object
 import os
 import json
 import stat
@@ -64,13 +67,13 @@ trap 'error_exit $?' ERR
 
 def run_command(dry_run, command):
     if not dry_run:
-        print '>> ' + command
+        print('>> ' + command)
         return os.system(command)
     else:
-        print '[DRY-RUN]: ' + command
+        print('[DRY-RUN]: ' + command)
 
 
-class Jobs:
+class Jobs(object):
     description = 'Simple job submission system'
 
     def __init__(self):
@@ -100,7 +103,7 @@ class Jobs:
                            help='Print commands to the screen but do not run them')
         group.add_argument('--cwd', type=int, default=1,
                            help='Switch to the submission directory within the job')
-        group.add_argument('--sub-opts', default=self.bopts,
+        group.add_argument('--sub-opts', default=self.bopts, type=str,
                            help='Options for batch submission')
         group.add_argument('--memory', type=int,
                            help='Request memory for job [MB]')
@@ -139,7 +142,7 @@ class Jobs:
             njobs = 1
         else:
             njobs = int(ceil(float(nfiles)/float(files_per_job)))
-        for n in xrange(njobs):
+        for n in range(njobs):
             final_cfg = copy.deepcopy(cfg)
             for item in output_cfgs:
                 filename, extension = os.path.splitext(cfg[item])
@@ -192,7 +195,7 @@ class Jobs:
                 text_file.write(SLURM_POSTFIX)
         st = os.stat(fname)
         os.chmod(fname, st.st_mode | stat.S_IEXEC)
-        print 'Created job script: %s' % script_filename
+        print('Created job script: %s' % script_filename)
         if self.tracking and not self.dry_run:
             trackname = script_filename.replace('.sh', '.status.created')
             open(trackname, 'a').close()
@@ -220,7 +223,7 @@ class Jobs:
             for i, j in enumerate(range(0, len(self.job_queue), self.merge)):
                 njobs += 1
                 script_name = 'job_%s_%i.sh' % (self.task_name, i)
-                if self.task_dir is not '':
+                if self.task_dir != '':
                     script_name = os.path.join(self.task_dir, script_name)
                 status = 'unknown'
                 if self.tracking:
@@ -267,10 +270,10 @@ class Jobs:
         if self.job_mode == 'condor':
             outscriptname = 'condor_%s.sh' % self.task_name
             subfilename = 'condor_%s.sub' % self.task_name
-            if self.task_dir is not '':
+            if self.task_dir != '':
                 outscriptname = os.path.join(self.task_dir, outscriptname)
                 subfilename = os.path.join(self.task_dir, subfilename)
-            print '>> condor job script will be %s' % outscriptname
+            print('>> condor job script will be %s' % outscriptname)
             outscript = open(outscriptname, "w")
             DO_JOB_PREFIX = JOB_PREFIX % ({
               'PWD': (os.environ['PWD'] if self.args.cwd else '${INITIALDIR}')
@@ -290,7 +293,7 @@ class Jobs:
               'EXE': outscriptname,
               'TASK': self.task_name,
               'TASKDIR': os.path.join(self.task_dir, ''),
-              'EXTRA': self.bopts.decode('string_escape'),
+              'EXTRA': self.bopts.encode("UTF-8").decode("unicode_escape"),
               'NUMBER': jobs
             }
             subfile.write(condor_settings)
@@ -298,13 +301,13 @@ class Jobs:
             run_command(self.dry_run, 'condor_submit %s' % (subfilename))
 
         if self.job_mode in ['lxbatch', 'ts'] and self.tracking:
-            print '>> Status summary: %s' % self.task_name
+            print('>> Status summary: %s' % self.task_name)
             for status in status_result:
                 counter = '[%i/%i]' % (len(status_result[status]), njobs)
-                print '%20s %10s' % (status, counter)
+                print('%20s %10s' % (status, counter))
                 if self.tracking == 'long':
                     for f in status_result[status]:
-                        print ' '*20 + '%s' % f
+                        print(' '*20 + '%s' % f)
 
 
 

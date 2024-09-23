@@ -1,0 +1,10 @@
+--- madgraph/interface/reweight_interface.py	2023-06-21 18:21:22.000000001 +0200
++++ madgraph/interface/reweight_interface.py.fixed	2023-06-21 18:21:18.000000001 +0200
+@@ -692,7 +692,6 @@
+                 self.all_cross_section[(tag_name,name)] = (cross[name], error[name])
+ 
+         # perform the scanning
+-        reweight_name = self.options['rwgt_name'].rsplit('_',1)[0] # to avoid side effect during the scan
+         if param_card_iterator:
+             if self.options['rwgt_name']:
+                 reweight_name = self.options['rwgt_name'].rsplit('_',1)[0] # to avoid side effect during the scan

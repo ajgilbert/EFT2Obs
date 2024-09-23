@@ -117,7 +117,7 @@ class CMS_2021_PAS_SMP_20_005 : public Analysis {
   WGammaRivetVariables vars_;
   map<string, Histo1DPtr> _h;
 
-  DEFAULT_RIVET_ANALYSIS_CTOR(CMS_2021_PAS_SMP_20_005);
+  RIVET_DEFAULT_ANALYSIS_CTOR(CMS_2021_PAS_SMP_20_005);
 
   void init() {
     vars_.resetVars();
@@ -424,6 +424,6 @@ double CMS_2021_PAS_SMP_20_005::WGSystem::SymPhi() {
   }
 }
 
-DECLARE_RIVET_PLUGIN(CMS_2021_PAS_SMP_20_005);
+RIVET_DECLARE_PLUGIN(CMS_2021_PAS_SMP_20_005);
 
 }  // namespace Rivet

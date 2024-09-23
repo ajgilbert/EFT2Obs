@@ -1,3 +1,5 @@
+from __future__ import print_function
+from builtins import zip
 import os
 import sys
 import tools
@@ -20,7 +22,7 @@ import check_param_card as param_card_mod
 cfg = tools.GetConfigFile(args.config)
 
 param_card_path = '%s/%s/Cards/param_card.dat' % (os.environ['MG_DIR'], process.split('/')[-1])
-print '>> Parsing %s' % param_card_path
+print('>> Parsing %s' % param_card_path)
 param_card = param_card_mod.ParamCard(param_card_path)
 
 
@@ -28,7 +30,7 @@ before = []
 after = []
 
 for block in cfg['blocks']:
-    ids = [X[0] for X in param_card[block].keys()]
+    ids = [X[0] for X in list(param_card[block].keys())]
 
     for i in ids:
         par = param_card[block].param_dict[(i,)]
@@ -45,16 +47,16 @@ for p in cfg['inactive']['parameters']:
 
 
 for block in cfg['blocks']:
-    ids = [X[0] for X in param_card[block].keys()]
+    ids = [X[0] for X in list(param_card[block].keys())]
 
     for i in ids:
         par = param_card[block].param_dict[(i,)]
         after.append([block, i, par.comment.strip(), par.value])
 
-print '>> The following active and inactive parameter changes will be applied:'
+print('>> The following active and inactive parameter changes will be applied:')
 for b, a in zip(before, after):
     if a[3] != b[3]:
-        print '    - Block %-30s: Parameter %-3i %-30s: %-10g --> %-10g' % (a[0], a[1], a[2], b[3], a[3])
+        print('    - Block %-30s: Parameter %-3i %-30s: %-10g --> %-10g' % (a[0], a[1], a[2], b[3], a[3]))
 
-print '>> Writing %s' % args.output
+print('>> Writing %s' % args.output)
 param_card.write(args.output)

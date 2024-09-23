@@ -293,7 +293,7 @@ def CreateTransparentColor(color, alpha):
 
 
 def Set(obj, **kwargs):
-    for key, value in kwargs.items():
+    for key, value in list(kwargs.items()):
         if value is None:
             getattr(obj, 'Set' + key)()
         elif isinstance(value, (list, tuple)):
@@ -745,7 +745,7 @@ def LimitTGraphFromJSONFile(jsfile, label):
 def ToyTGraphFromJSON(js, label):
     xvals = []
     yvals = []
-    if isinstance(label,(str,)):
+    if isinstance(label,str):
         for entry in js[label]:
             xvals.append(float(entry))
             yvals.append(1.0)

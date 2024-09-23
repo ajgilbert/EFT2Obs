@@ -1,8 +1,10 @@
+from builtins import str
+from builtins import object
 import numpy as np
 
 VERB=True
 
-class Particle:
+class Particle(object):
   def __init__(self, p, pdg_id, status, helicity=None):
     self.p = p
     self.pdg_id = pdg_id
@@ -37,7 +39,7 @@ class Particle:
 
     return string
 
-class Event:
+class Event(object):
   def __init__(self, event_id, weight, gen_particles, alphas=0.137, scale2=0.0):
     self.event_id = event_id
     self.gen_particles = gen_particles

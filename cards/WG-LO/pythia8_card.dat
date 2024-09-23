@@ -25,7 +25,7 @@ Main:numberOfEvents      = -1
 !               fifo). Note that the fifo file extension *must* be '.hepmc.fifo'.
 ! -------------------------------------------------------------------
 !
-HEPMCoutput:file         = fifo@XTMPDIRX/fifo.hepmc
+HEPMCoutput:file         = auto
 !
 ! --------------------------------------------------------------------
 ! Parameters relevant only when performing MLM merging, which can be

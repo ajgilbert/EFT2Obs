@@ -5,7 +5,12 @@ Can be used interactively to search through an lhe file by doing:
 If you want to also see the reweights in the lhe file do:
   python scripts/lhe_interface.py my_lhe_file.lhe <number of reweights>
 """
+from __future__ import print_function
 
+from builtins import input
+from builtins import str
+from builtins import next
+from builtins import range
 import ROOT
 from event import *
 import numpy as np
@@ -75,6 +80,6 @@ if __name__=="__main__":
         end = True
         break
     if not end:
-      if raw_input("Press enter to continue (input anything else to stop): ")!="":
+      if input("Press enter to continue (input anything else to stop): ")!="":
         end = True
         

@@ -81,14 +81,15 @@ if args.rebin is not None and not is2D:
     for h in hists:
         h.rebinTo(rebin)
 
-nbins = hists[0].numBins
+nbins = hists[0].numBins()
 
 if is2D:
-    edges = [[list(hists[0].bins[ib].xEdges), list(hists[0].bins[ib].yEdges)] for ib in range(nbins)]
+    edges = [[list(hists[0].bins()[ib].xEdges()), list(hists[0].bins()[ib].yEdges())] for ib in range(nbins)]
     # areas = list(hists[0].volumes())
-    areas = [hists[0].bins[ib].volume for ib in range(nbins)]
+    areas = [hists[0].bins()[ib].volume() for ib in range(nbins)]
 else:
-    edges = [list(hists[0].bins[ib].xEdges) for ib in range(nbins)]
+    print(nbins)
+    edges = [list(hists[0].bins()[ib].xEdges()) for ib in range(nbins)]
     areas = list(hists[0].areas())
     # print (areas,  [hists[0].bins[ib].sumW for ib in range(nbins)])
 
@@ -131,9 +132,9 @@ def initTerms(params):
 
 e2ohist = EFT2ObsHist(
     terms=initTerms([X['name'] for X in pars]),
-    sumW=[[hist.bins[ib].sumW for ib in range(nbins)] for hist in hists],
-    sumW2=[[hist.bins[ib].sumW2 for ib in range(nbins)] for hist in hists],
-    numEntries=[[hist.bins[ib].numEntries for ib in range(nbins)] for hist in hists],
+    sumW=[[hist.bins()[ib].sumW() for ib in range(nbins)] for hist in hists],
+    sumW2=[[hist.bins()[ib].sumW2() for ib in range(nbins)] for hist in hists],
+    numEntries=[[hist.bins()[ib].numEntries() for ib in range(nbins)] for hist in hists],
     bin_edges=edges,
     bin_labels=bin_labels)
 

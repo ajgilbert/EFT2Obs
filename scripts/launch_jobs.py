@@ -1,3 +1,4 @@
+from builtins import range
 from jobs import Jobs
 import argparse
 import os
@@ -15,7 +16,7 @@ job_mgr.set_args(args)
 
 iwd = os.environ['PWD']
 
-for i in xrange(args.initial_seed, args.initial_seed + args.jobs):
+for i in range(args.initial_seed, args.initial_seed + args.jobs):
     cmd = []
 
     if args.env is not None:

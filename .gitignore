@@ -22,6 +22,11 @@ fjcontrib-*/
 rivet-bootstrap
 hepmc*/
 local/
+cython*/
+HepMC-*/
+LHAPDF-*/
 *.tar.gz
 mgconfigscript
 cards/fitting-exercise
+rw_*/
+test-*/
