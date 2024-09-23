@@ -1,0 +1,5 @@
+import model SMEFTsim_U35_MwScheme_UFO-massless
+
+generate p p > h mu+ mu- NP<=1 @0
+
+output zh-SMEFTsim3

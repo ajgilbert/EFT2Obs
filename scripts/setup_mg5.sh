@@ -45,7 +45,10 @@ rm "${MG_TARBALL}"
 
 pushd "${MG_DIR}"
 	./bin/mg5_aMC ../mgconfigscript
-  echo "f2py_compiler_py3 = f2py3" >> input/mg5_configuration.txt
+
+if [ -n "${CMSSW_BASE}" ]; then
+	echo "f2py_compiler_py3 = f2py3" >> input/mg5_configuration.txt
+fi
   #patch madgraph/interface/reweight_interface.py "${IWD}/setup/reweight_interface.py.patch"
   #patch madgraph/core/helas_objects.py "${IWD}/setup/helas_objects.py.patch"
   #patch madgraph/interface/master_interface.py "${IWD}/setup/master_interface.py.patch"
