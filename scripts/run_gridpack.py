@@ -180,6 +180,9 @@ if load_hepmc is None:
             with open('mgrunscript', "w") as text_file:
                 text_file.write('\n'.join(lines))
             subprocess.check_call('./bin/madevent --debug shower GridRun < mgrunscript', shell=True)
+
+    if args.to_step == 'shower':
+        finished = True
 else:
     subprocess.check_call(['cp', '%s/events_%i.hepmc.gz' % (load_hepmc, seed), '%s/events_%i.hepmc.gz' % (tmpdir, seed)])
     subprocess.check_call(['gunzip', '%s/events_%i.hepmc.gz' % (tmpdir, seed)])
