@@ -76,7 +76,7 @@ The main steps for defining a process, generating events and extracting scaling 
 
 ![workflow](/resources/docs/EFT2Obs.jpeg)
 
-In this section for clarity we will follow a specific example, ZH production in the HEL model with the STXS Rivet routine, but the steps are generic and it should be straightforward to run with other processes or models.
+In this section for clarity we will follow a specific example, ZH production in the SMEFT model with the STXS Rivet routine, but the steps are generic and it should be straightforward to run with other processes or models.
 
 It is also possible to generate events at NLO in QCD and apply reweighting with an NLO-capable UFO model. In some places an alternative script must be used, and in others it is sufficient to add the `--nlo` flag to the usual script.
 
@@ -111,7 +111,7 @@ For an NLO process (with `[QCD]` in the process definition), use the `setup_proc
 
 ### Prepare Madgraph cards
 
-There are four further configuration cards that we need to specify: the `run_card.dat`, `pythia8_card.dat`, `param_card.dat` and `reweight_card.dat`. For NLO generation the `pythia8_card.dat` card is replaced by `shower_card.dat`. For the first two we can start from the default cards Madgraph created in the `MG5_aMC_v2_9_16/zh-SMEFTsim3/Cards` directory. If these files do not already exist in our `cards/zh-HEL` directory then they will have been copied there in the `setup_process.sh` step above. If necessary edit these cards to set the desired values for the generation or showering parameters. In this example the cards have already been configured in the repository. *Note for CMS users: to emulate the Pythia configuration in official CMS sample production the lines in `resources/pythia8/cms_default_2018.dat` can be added to the `pythia8_card.cat`*.
+There are four further configuration cards that we need to specify: the `run_card.dat`, `pythia8_card.dat`, `param_card.dat` and `reweight_card.dat`. For NLO generation the `pythia8_card.dat` card is replaced by `shower_card.dat`. For the first two we can start from the default cards Madgraph created in the `MG5_aMC_v2_9_16/zh-SMEFTsim3/Cards` directory. If these files do not already exist in our `cards/zh-SMEFTsim3` directory then they will have been copied there in the `setup_process.sh` step above. If necessary edit these cards to set the desired values for the generation or showering parameters. In this example the cards have already been configured in the repository. *Note for CMS users: to emulate the Pythia configuration in official CMS sample production the lines in `resources/pythia8/cms_default_2018.dat` can be added to the `pythia8_card.cat`*.
 
 For NLO generation some care must be taken with the `run_card.dat`:
 
@@ -208,7 +208,7 @@ To make the event generation more efficient and easier to run in parallel we fir
 ./scripts/make_gridpack_NLO.sh zh-SMEFTsim3  # for NLO
 ```
 
-Once complete the gridpack `gridpack_zh-HEL.tar.gz` will be copied to the main directory. The script can also produce a standalone version of the matrix-element code. This can be useful for reweighting events outside of the EFT2Obs tool. To produce this, add an additional flag:
+Once complete the gridpack `gridpack_zh-SMEFTsim3.tar.gz` will be copied to the main directory. The script can also produce a standalone version of the matrix-element code. This can be useful for reweighting events outside of the EFT2Obs tool. To produce this, add an additional flag:
 
 ```sh
 ./scripts/make_gridpack.sh zh-SMEFTsim3 1
@@ -432,7 +432,6 @@ The following limitations currently apply. Links to GitHub issues indicate which
  - Processes are limited to one new-physics vertex (i.e. `NP <= 1` syntax required in the process definition).
  - Some incompatibilities with the CMSSW environment have been reported. For now this should not be set when running EFT2Obs.
 
-
 ## Reading LHE files 
 
 If the LHE files are directly saved, in order to plot from these, some dedicated scripts can be found in `EFT2Obs/scripts`. These use the [lhereader](https://pypi.org/project/lhereader/) package, and to run them, it is necessary to install a python environment:
@@ -442,7 +441,7 @@ virtualenv --python=$(which python3) .venv
 source ./.venv/bin/activate
 pip install lhereader
 ```
-Once this step has finished and lhereader is installed (it is possible that a few warnings or errors appear, but if the package got installed it's okay) change the file that can be found in the new environment: `.venv/lib/python[your_version]/site-packages/lhereader/__init__.py` by the file found in `EFT2Obs/scripts/lhereader/__init__.py`.
+Once this step has finished and lhereader is installed (it is possible that a few warnings or errors appear, but if the package got installed it's okay) and change the file that can be found in the new environment: `.venv/lib/python[your_version]/site-packages/lhereader/__init__.py` by the file found in `EFT2Obs/scripts/lhereader/__init__.py`.
 
 Further packages might need to be installed like:
 
@@ -450,7 +449,7 @@ Further packages might need to be installed like:
 pip install pyarrow
 ```
 
-Once the environment has been set up, before running `produce_plots_lhe.py` it is required to remove all the `NP<=1` or `NP<=0` inside the LHE files as these characters are not supported by the xml reader.  Once the condor jobs have finised, the output is given by `events_1_lhe.gz`. To use it as input, it is necessary to unzip them and remove the unwanted characters by doing:
+Once the environment has been set up, before running `produce_plots_lhe.py` it is required to remove all the `NP<=1` or `NP<=0` inside the LHE files as these characters are not supported by the xml reader.  Once the condor jobs have finised, the output is given by `events_1_lhe.gz`. To use it as input, it is necessary to unzip them and remove the unwanted charcters by doing:
 
 ```
 gunzip events_*_lhe.gz
