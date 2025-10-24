@@ -433,5 +433,39 @@ The following limitations currently apply. Links to GitHub issues indicate which
  - Some incompatibilities with the CMSSW environment have been reported. For now this should not be set when running EFT2Obs.
 
 
+## Reading LHE files 
 
+If the LHE files are directly saved, in order to plot from these, some dedicated scripts can be found in `EFT2Obs/scripts`. These use the [lhereader](https://pypi.org/project/lhereader/) package, and to run them, it is necessary to install a python environment:
 
+```
+virtualenv --python=$(which python3) .venv
+source ./.venv/bin/activate
+pip install lhereader
+```
+Once this step has finished and lhereader is installed (it is possible that a few warnings or errors appear, but if the package got installed it's okay) change the file that can be found in the new environment: `.venv/lib/python[your_version]/site-packages/lhereader/__init__.py` by the file found in `EFT2Obs/scripts/lhereader/__init__.py`.
+
+Further packages might need to be installed like:
+
+```
+pip install pyarrow
+```
+
+Once the environment has been set up, before running `produce_plots_lhe.py` it is required to remove all the `NP<=1` or `NP<=0` inside the LHE files as these characters are not supported by the xml reader.  Once the condor jobs have finised, the output is given by `events_1_lhe.gz`. To use it as input, it is necessary to unzip them and remove the unwanted characters by doing:
+
+```
+gunzip events_*_lhe.gz
+for i in {1..N}; do sed 's/NP<=//' events_${i}.lhe &> events_${i}_nonp.lhe ; done
+```
+Replace `N` by your number of files. Now that the LHE files are in the correct format, it is finally possible to start producing plots. To optimize the plotting time, it is necessary to start by loading the events into parquet files. (Note that the parquet path is for now hardcoded)
+
+```
+ python3 scripts/produce_plots_lhe.py --parquet --file chg_cpv_H2j 
+```
+
+And once the parquet file has been created it is possible to plot the observables:
+
+```
+python3 scripts/produce_plots_lhe.py --file chg_cpv_H2j --output test-ggF-H
+```
+
+Note: for the ratio plots, the first element of `weight_dataset` in `produce_plots_lhe` will be the denominator. Therefore, if the goal is to compare different histograms to the nominal one, the first element of `weight_dataset` needs to be the one having the weights corresponding to `wilson_coeff=0` .
