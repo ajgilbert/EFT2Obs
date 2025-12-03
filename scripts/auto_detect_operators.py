@@ -83,13 +83,13 @@ def makeConfig(process, model, params, args):
 
   extra_args = " --def-val %s --def-sm %s --def-gen %s"%(args.def_val, args.def_sm, args.def_gen)
   if args.set_inactive != None: extra_args += " --set-inactive %s"%" ".join(args.set_inactive)
-  command = "python scripts/make_config.py -p %s -o cards/%s/config.json --pars %s"%(process, process, block_param_nums) + extra_args
+  command = "python3 scripts/make_config.py -p %s -o cards/%s/config.json --pars %s"%(process, process, block_param_nums) + extra_args
   print(command)
   os.system(command)
 
 def makeReweight(process):
   print(">> Making reweight card")
-  command = "python scripts/make_reweight_card.py cards/%s/config.json cards/%s/reweight_card.dat"%(process, process)
+  command = "python3 scripts/make_reweight_card.py cards/%s/config.json cards/%s/reweight_card.dat"%(process, process)
   os.system(command)
 
 
