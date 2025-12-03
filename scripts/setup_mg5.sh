@@ -40,10 +40,12 @@ rm "${MG_TARBALL}"
 	echo "set automatic_html_opening False"
 	echo "set auto_convert_model T"
 	echo "save options --all"
-  echo "install pythia8"
+  echo "install pythia8 --local"
 } > mgconfigscript
 
 pushd "${MG_DIR}"
+  # Use the bundled installer script, not the one downloaded from the server
+  tar -zxf vendor/OfflineHEPToolsInstaller.tar.gz -C ../
 	./bin/mg5_aMC ../mgconfigscript
 
 if [ -n "${CMSSW_BASE}" ]; then
