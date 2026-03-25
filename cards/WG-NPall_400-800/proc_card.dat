@@ -1,0 +1,10 @@
+import model SMEFTsim_topU3l_MwScheme_propagatorhack_UFO-massless
+
+define lep = mu+ mu- e+ e-
+define nu = vm vm~ ve ve~
+
+generate p p > lep nu a NPall<=2 NPprop^2<=2 @1
+add process p p > lep nu a j NPall<=2 NPprop^2<=2 @2
+add process p p > lep nu a j j QED<=4 NPall<=2 NPprop^2<=2 @3
+
+output WG-NPall_400-800 -nojpeg

@@ -1,16 +1,20 @@
+
+// This is not the offical Rivet plugin working on the official Rivet 3.1.2 release, but a modified version of it that works with Rivet 4 and includes the modifications made for additional 3D histogram in pT x |phi_f| x theta bins.
+// It also includes theta variable. 
 // -*- C++ -*-
 #include "Rivet/Analysis.hh"
 #include "Rivet/Event.hh"
 #include "Rivet/Math/LorentzTrans.hh"
 #include "Rivet/Particle.hh"
 #include "Rivet/Projections/ChargedLeptons.hh"
-#include "Rivet/Projections/DressedLeptons.hh"
+#include "Rivet/Projections/LeptonFinder.hh"  
 #include "Rivet/Projections/FastJets.hh"
 #include "Rivet/Projections/FinalState.hh"
 #include "Rivet/Projections/IdentifiedFinalState.hh"
 #include "Rivet/Projections/MissingMomentum.hh"
 #include "Rivet/Projections/PromptFinalState.hh"
 #include "Rivet/Projections/VetoedFinalState.hh"
+#include <cmath>
 
 namespace Rivet {
 
@@ -47,6 +51,9 @@ class CMS_2021_PAS_SMP_20_005 : public Analysis {
     double true_phi;
     double true_phi_f;
 
+    double true_theta; 
+    double true_costheta; 
+
     int n_jets;
 
     WGammaRivetVariables() { resetVars(); }
@@ -63,6 +70,7 @@ class CMS_2021_PAS_SMP_20_005 : public Analysis {
       p0_phi = 0.;
       p0_M = 0.;
       p0_frixione = false;
+      p0_frixione_sum = 0.;
       n0_pt = 0.;
       n0_eta = 0.;
       n0_phi = 0.;
@@ -71,6 +79,8 @@ class CMS_2021_PAS_SMP_20_005 : public Analysis {
       met_phi = 0.;
       true_phi = 0.;
       true_phi_f = 0.;
+      true_theta = 0.; 
+      true_costheta = 0.; 
       l0p0_dr = 0.;
       mt_cluster = 0.;
       n_jets = 0;
@@ -96,6 +106,8 @@ class CMS_2021_PAS_SMP_20_005 : public Analysis {
 
     double Phi();
     double SymPhi();
+    double Theta(); 
+    double CosTheta(); 
   };
 
   double photon_iso_dr_ = 0.4;
@@ -116,8 +128,27 @@ class CMS_2021_PAS_SMP_20_005 : public Analysis {
 
   WGammaRivetVariables vars_;
   map<string, Histo1DPtr> _h;
+  map<string, Histo2DPtr> _h2;
+
+  // 3D histogram: (pT) x (|phi_f|) x (theta)
+  // x: pT   {150,200,300,500,800,1500} GeV, y: |phi_f| {0, pi/6, pi/3, pi/2}, z: theta   {0, pi/3, 2pi/3, pi}
+  Histo3DPtr _h3_pt_phi_theta;
 
   RIVET_DEFAULT_ANALYSIS_CTOR(CMS_2021_PAS_SMP_20_005);
+
+  static int phiBin3(double absphi) {
+    if (absphi > 0. && absphi <= (PI / 6.)) return 0;
+    if (absphi > (PI / 6.) && absphi <= (PI / 3.)) return 1;
+    if (absphi > (PI / 3.) && absphi <= (PI / 2.)) return 2;
+    return -1;
+  }
+
+  static int thetaBin3(double theta) {
+    if (theta >= 0. && theta <= (PI / 3.)) return 0;
+    if (theta > (PI / 3.) && theta <= (2. * PI / 3.)) return 1;
+    if (theta > (2. * PI / 3.) && theta <= PI) return 2;
+    return -1;
+  }
 
   void init() {
     vars_.resetVars();
@@ -128,7 +159,7 @@ class CMS_2021_PAS_SMP_20_005 : public Analysis {
     // Jets - all final state particles excluding neutrinos
     VetoedFinalState vfs;
     vfs.vetoNeutrinos();
-    FastJets fastjets(vfs, FastJets::ANTIKT, 0.4);
+    FastJets fastjets(vfs, fastjet::antikt_algorithm, fastjet::E_scheme, 0.4);
     declare(fastjets, "Jets");
 
     // Dressed leptons
@@ -142,9 +173,9 @@ class CMS_2021_PAS_SMP_20_005 : public Analysis {
     prompt_photons.acceptMuonDecays(true);
     prompt_photons.acceptTauDecays(true);
 
-    DressedLeptons dressed_leptons(prompt_photons, prompt_leptons, dressed_lepton_cone_,
-                                   Cuts::open(),
-                                   /*useDecayPhotons*/ false);
+    // Rivet 4: LeptonFinder replaces DressedLeptons; arg order swapped
+    LeptonFinder dressed_leptons(prompt_leptons, prompt_photons, dressed_lepton_cone_,
+                                 Cuts::open());
     declare(dressed_leptons, "DressedLeptons");
 
     // Photons
@@ -171,47 +202,91 @@ class CMS_2021_PAS_SMP_20_005 : public Analysis {
     book(_h["baseline_mt_cluster"], 29, 1, 1);
     book(_h["baseline_njet"], 36, 1, 1);
     book(_h["raz_leppho_deta"], 40, 1, 1);
+
     book(_h["eft_photon_pt_phi_0"], 54, 1, 1);
     book(_h["eft_photon_pt_phi_1"], 55, 1, 1);
     book(_h["eft_photon_pt_phi_2"], 56, 1, 1);
+
+    book(_h["eft_ext_photon_pt_phi_0"], "eft_ext_photon_pt_phi_0",
+         {150., 200., 300., 500., 800., 1500.});
+    book(_h["eft_ext_photon_pt_phi_1"], "eft_ext_photon_pt_phi_1",
+         {150., 200., 300., 500., 800., 1500.});
+    book(_h["eft_ext_photon_pt_phi_2"], "eft_ext_photon_pt_phi_2",
+         {150., 200., 300., 500., 800., 1500.});
+
+    // New 3x3 pT histograms binned in phi and theta
+    book(_h["eft_ext_photon_pt_phi_0_theta_0"], "eft_ext_photon_pt_phi_0_theta_0",
+         {150., 200., 300., 500., 800., 1500.});
+    book(_h["eft_ext_photon_pt_phi_0_theta_1"], "eft_ext_photon_pt_phi_0_theta_1",
+         {150., 200., 300., 500., 800., 1500.});
+    book(_h["eft_ext_photon_pt_phi_0_theta_2"], "eft_ext_photon_pt_phi_0_theta_2",
+         {150., 200., 300., 500., 800., 1500.});
+    book(_h["eft_ext_photon_pt_phi_1_theta_0"], "eft_ext_photon_pt_phi_1_theta_0",
+         {150., 200., 300., 500., 800., 1500.});
+    book(_h["eft_ext_photon_pt_phi_1_theta_1"], "eft_ext_photon_pt_phi_1_theta_1",
+         {150., 200., 300., 500., 800., 1500.});
+    book(_h["eft_ext_photon_pt_phi_1_theta_2"], "eft_ext_photon_pt_phi_1_theta_2",
+         {150., 200., 300., 500., 800., 1500.});
+    book(_h["eft_ext_photon_pt_phi_2_theta_0"], "eft_ext_photon_pt_phi_2_theta_0",
+         {150., 200., 300., 500., 800., 1500.});
+    book(_h["eft_ext_photon_pt_phi_2_theta_1"], "eft_ext_photon_pt_phi_2_theta_1",
+         {150., 200., 300., 500., 800., 1500.});
+    book(_h["eft_ext_photon_pt_phi_2_theta_2"], "eft_ext_photon_pt_phi_2_theta_2",
+         {150., 200., 300., 500., 800., 1500.});
+
+    book(_h["eft_phi"], "eft_phi", 10, -PI/2., PI/2.); 
+    book(_h["eft_costheta"], "eft_costheta", 10, -1.0, 1.0); 
+    book(_h["eft_costheta_phi_0"], "eft_costheta_phi_0", 10, -1.0, 1.0); 
+    book(_h["eft_costheta_phi_1"], "eft_costheta_phi_1", 10, -1.0, 1.0); 
+    book(_h["eft_costheta_phi_2"], "eft_costheta_phi_2", 10, -1.0, 1.0); 
+    book(_h["eft_theta"], "eft_theta", 10, 0.0, PI); 
+    book(_h["eft_theta_phi_0"], "eft_theta_phi_0", 10, 0.0, PI); 
+    book(_h["eft_theta_phi_1"], "eft_theta_phi_1", 10, 0.0, PI);
+    book(_h["eft_theta_phi_2"], "eft_theta_phi_2", 10, 0.0, PI); 
+
+    book(_h2["eft_phi_theta"], "eft_phi_theta", 10, 0.0, PI/2., 10, 0.0, PI); 
+
+    // 3D histogram with 3 theta bins 
+    const std::vector<double> pt3d_edges = {150., 200., 300., 500., 800., 1500.};
+    const std::vector<double> phi3d_edges = {0., PI/6., PI/3., PI/2.};
+    const std::vector<double> theta3d_edges = {0., PI/3., 2. * PI / 3., PI};
+    book(_h3_pt_phi_theta, "eft_pt_phi_theta_3d", pt3d_edges, phi3d_edges, theta3d_edges);
   }
 
-  /// Perform the per-event analysis
+  // Perform the per-event analysis
   void analyze(const Event& event) {
     vars_.resetVars();
 
-    const Particles leptons = applyProjection<FinalState>(event, "DressedLeptons").particlesByPt();
+    const Particles leptons = apply<LeptonFinder>(event, "DressedLeptons").particlesByPt();
 
     if (leptons.size() == 0) {
       vetoEvent;
     }
     auto l0 = leptons.at(0);
 
-    const Particles photons = applyProjection<FinalState>(event, "Photons")
+    const Particles photons = apply<FinalState>(event, "Photons")
                                   .particlesByPt(DeltaRGtr(l0, lepton_photon_dr_cut_));
     if (photons.size() == 0) {
       vetoEvent;
     }
     auto p0 = photons.at(0);
 
-    const Particles neutrinos = applyProjection<FinalState>(event, "Neutrinos").particlesByPt();
+    const Particles neutrinos = apply<FinalState>(event, "Neutrinos").particlesByPt();
     if (neutrinos.size() == 0) {
       vetoEvent;
     }
     auto n0 = neutrinos.at(0);
 
-    FourMomentum met = applyProjection<MissingMomentum>(event, "MET").missingMomentum();
-    // Redefine the MET
+    FourMomentum met = apply<MissingMomentum>(event, "MET").missingMomentum();
     met = FourMomentum(met.pt(), met.px(), met.py(), 0.);
 
     // Filter jets on pT, eta and DR with lepton and photon
-    const Jets jets = applyProjection<FastJets>(event, "Jets").jetsByPt([&](Jet const& j) {
+    const Jets jets = apply<FastJets>(event, "Jets").jetsByPt([&](Jet const& j) {
       return j.pt() > jet_pt_cut_ && std::abs(j.eta()) < jet_abs_eta_cut_ &&
              deltaR(j, l0) > jet_dr_cut_ && deltaR(j, p0) > jet_dr_cut_;
     });
 
     if (leptons.size() >= 1 && photons.size() >= 1 && neutrinos.size() >= 1) {
-      // Populate variables
       vars_.is_wg_gen = true;
       vars_.l0_pt = l0.pt();
       vars_.l0_eta = l0.eta();
@@ -232,9 +307,7 @@ class CMS_2021_PAS_SMP_20_005 : public Analysis {
       vars_.met_pt = met.pt();
       vars_.met_phi = met.phi(PhiMapping::MINUSPI_PLUSPI);
 
-      // Here we build a list of particles to cluster jets, to
-      // be used in the photon isolation
-      Particles finalparts_iso = applyProjection<FinalState>(event, "FinalState").particles();
+      Particles finalparts_iso = apply<FinalState>(event, "FinalState").particles();
       Particles filtered_iso;
       for (Particle const& p : finalparts_iso) {
         if (p.genParticle() == l0.genParticle() || p.genParticle() == p0.genParticle() ||
@@ -243,7 +316,7 @@ class CMS_2021_PAS_SMP_20_005 : public Analysis {
         }
         filtered_iso.push_back(p);
       }
-      auto proj = getProjection<FastJets>("Jets");
+      auto proj = get<FastJets>("Jets");
       proj.reset();
       proj.calc(filtered_iso);
       auto jets_iso = proj.jets();
@@ -251,7 +324,6 @@ class CMS_2021_PAS_SMP_20_005 : public Analysis {
       vars_.p0_frixione = true;
       double frixione_sum = 0.;
 
-      // Apply Frixione isolation to the photon:
       auto jparts = sortBy(jets_iso, [&](Jet const& part1, Jet const& part2) {
         return deltaR(part1, p0) < deltaR(part2, p0);
       });
@@ -266,14 +338,15 @@ class CMS_2021_PAS_SMP_20_005 : public Analysis {
           vars_.p0_frixione = false;
         }
       }
+      vars_.p0_frixione_sum = frixione_sum;
 
-      // Now calculate EFT phi observables
       auto wg_system = WGSystem(l0, n0, p0, false);
 
       vars_.true_phi = wg_system.Phi();
       vars_.true_phi_f = wg_system.SymPhi();
+      vars_.true_theta = wg_system.Theta();
+      vars_.true_costheta = wg_system.CosTheta();
 
-      // Calculate mTcluster
       auto cand1 = l0.momentum() + p0.momentum();
       auto full_system = cand1 + met;
       double mTcluster2 =
@@ -304,37 +377,114 @@ class CMS_2021_PAS_SMP_20_005 : public Analysis {
           vars_.p0_pt > eft_photon_pt_cut_ && std::abs(vars_.p0_eta) < photon_abs_eta_cut_ &&
           vars_.p0_frixione && vars_.l0p0_dr > lepton_photon_dr_cut_ &&
           vars_.met_pt > missing_pt_cut_ && vars_.n_jets == 0) {
+
+        _h2["eft_phi_theta"]->fill(std::abs(vars_.true_phi_f), vars_.true_theta);
+
+        _h["eft_phi"]->fill(vars_.true_phi_f);
+        _h["eft_costheta"]->fill(vars_.true_costheta);
+        _h["eft_theta"]->fill(vars_.true_theta);
+
         double absphi = std::abs(vars_.true_phi_f);
+        double pt_gev = vars_.p0_pt / GeV;
+
+        // Fill 3D histogram
+        _h3_pt_phi_theta->fill(pt_gev, absphi, vars_.true_theta);
+
+        int iphi = phiBin3(absphi);
+        int itheta = thetaBin3(vars_.true_theta);
+
         if (absphi > 0. && absphi <= (PI / 6.)) {
-          _h["eft_photon_pt_phi_0"]->fill(vars_.p0_pt / GeV);
+          _h["eft_photon_pt_phi_0"]->fill(pt_gev);
+          _h["eft_ext_photon_pt_phi_0"]->fill(pt_gev);
+          _h["eft_costheta_phi_0"]->fill(vars_.true_costheta);
+          _h["eft_theta_phi_0"]->fill(vars_.true_theta);
         } else if (absphi > (PI / 6.) && absphi <= (PI / 3.)) {
-          _h["eft_photon_pt_phi_1"]->fill(vars_.p0_pt / GeV);
+          _h["eft_photon_pt_phi_1"]->fill(pt_gev);
+          _h["eft_ext_photon_pt_phi_1"]->fill(pt_gev);
+          _h["eft_costheta_phi_1"]->fill(vars_.true_costheta);
+          _h["eft_theta_phi_1"]->fill(vars_.true_theta);
         } else if (absphi > (PI / 3.) && absphi <= (PI / 2.)) {
-          _h["eft_photon_pt_phi_2"]->fill(vars_.p0_pt / GeV);
+          _h["eft_photon_pt_phi_2"]->fill(pt_gev);
+          _h["eft_ext_photon_pt_phi_2"]->fill(pt_gev);
+          _h["eft_costheta_phi_2"]->fill(vars_.true_costheta);
+          _h["eft_theta_phi_2"]->fill(vars_.true_theta);
         }
+
+        // Fill 3x3 pT histograms
+        if (iphi == 0 && itheta == 0) _h["eft_ext_photon_pt_phi_0_theta_0"]->fill(pt_gev);
+        if (iphi == 0 && itheta == 1) _h["eft_ext_photon_pt_phi_0_theta_1"]->fill(pt_gev);
+        if (iphi == 0 && itheta == 2) _h["eft_ext_photon_pt_phi_0_theta_2"]->fill(pt_gev);
+
+        if (iphi == 1 && itheta == 0) _h["eft_ext_photon_pt_phi_1_theta_0"]->fill(pt_gev);
+        if (iphi == 1 && itheta == 1) _h["eft_ext_photon_pt_phi_1_theta_1"]->fill(pt_gev);
+        if (iphi == 1 && itheta == 2) _h["eft_ext_photon_pt_phi_1_theta_2"]->fill(pt_gev);
+
+        if (iphi == 2 && itheta == 0) _h["eft_ext_photon_pt_phi_2_theta_0"]->fill(pt_gev);
+        if (iphi == 2 && itheta == 1) _h["eft_ext_photon_pt_phi_2_theta_1"]->fill(pt_gev);
+        if (iphi == 2 && itheta == 2) _h["eft_ext_photon_pt_phi_2_theta_2"]->fill(pt_gev);
       }
     }
   }
 
   void finalize() {
-    double flavor_factor = 3. / 2.;  // account for the fact that tau events are vetoed
-    // Scale according to cross section
-    for (std::string const& x :
+    double flavor_factor = 3. / 2.;
+
+    for (std::string const x :
          {"baseline_photon_pt", "baseline_photon_eta", "baseline_leppho_dr", "baseline_leppho_deta",
-          "baseline_mt_cluster", "baseline_njet", "raz_leppho_deta", "eft_photon_pt_phi_0",
-          "eft_photon_pt_phi_1", "eft_photon_pt_phi_2"}) {
+          "baseline_mt_cluster", "baseline_njet", "raz_leppho_deta",
+          "eft_photon_pt_phi_0", "eft_photon_pt_phi_1", "eft_photon_pt_phi_2",
+          "eft_ext_photon_pt_phi_0", "eft_ext_photon_pt_phi_1", "eft_ext_photon_pt_phi_2",
+          "eft_ext_photon_pt_phi_0_theta_0", "eft_ext_photon_pt_phi_0_theta_1",
+          "eft_ext_photon_pt_phi_0_theta_2", "eft_ext_photon_pt_phi_1_theta_0",
+          "eft_ext_photon_pt_phi_1_theta_1", "eft_ext_photon_pt_phi_1_theta_2",
+          "eft_ext_photon_pt_phi_2_theta_0", "eft_ext_photon_pt_phi_2_theta_1",
+          "eft_ext_photon_pt_phi_2_theta_2",
+          "eft_phi", "eft_costheta", "eft_theta",
+          "eft_costheta_phi_0", "eft_costheta_phi_1", "eft_costheta_phi_2",
+          "eft_theta_phi_0", "eft_theta_phi_1", "eft_theta_phi_2"}) {
       if (crossSection() < 0.) {
-        // Assume av. evt weight gives xsec
         scale(_h[x], flavor_factor / femtobarn / numEvents());
       } else {
         scale(_h[x], flavor_factor * crossSection() / femtobarn / sumOfWeights());
       }
     }
 
-    // Since these are really 2D, we need to divide by the y bin width:
-    for (std::string const& x :
-         {"eft_photon_pt_phi_0", "eft_photon_pt_phi_1", "eft_photon_pt_phi_2"}) {
+    for (const auto& kv : _h2) {
+      Histo2DPtr h2 = kv.second;
+      if (!h2) continue;
+      if (crossSection() < 0.) {
+        scale(h2, flavor_factor / femtobarn / numEvents());
+      } else {
+        scale(h2, flavor_factor * crossSection() / femtobarn / sumOfWeights());
+      }
+    }
+
+    if (crossSection() < 0.) {
+      scale(_h3_pt_phi_theta, flavor_factor / femtobarn / numEvents());
+    } else {
+      scale(_h3_pt_phi_theta, flavor_factor * crossSection() / femtobarn / sumOfWeights());
+    }
+
+    // Since these are really 2D, divide by the phi-bin width
+    for (std::string const x :
+         {"eft_photon_pt_phi_0", "eft_photon_pt_phi_1", "eft_photon_pt_phi_2",
+          "eft_ext_photon_pt_phi_0", "eft_ext_photon_pt_phi_1", "eft_ext_photon_pt_phi_2",
+          "eft_ext_photon_pt_phi_0_theta_0", "eft_ext_photon_pt_phi_0_theta_1",
+          "eft_ext_photon_pt_phi_0_theta_2", "eft_ext_photon_pt_phi_1_theta_0",
+          "eft_ext_photon_pt_phi_1_theta_1", "eft_ext_photon_pt_phi_1_theta_2",
+          "eft_ext_photon_pt_phi_2_theta_0", "eft_ext_photon_pt_phi_2_theta_1",
+          "eft_ext_photon_pt_phi_2_theta_2"}) {
       scale(_h[x], 1. / (PI / 6.));
+    }
+
+    // Also divide the 3x3 histograms by theta-bin width 
+    for (std::string const x :
+         {"eft_ext_photon_pt_phi_0_theta_0", "eft_ext_photon_pt_phi_0_theta_1",
+          "eft_ext_photon_pt_phi_0_theta_2", "eft_ext_photon_pt_phi_1_theta_0",
+          "eft_ext_photon_pt_phi_1_theta_1", "eft_ext_photon_pt_phi_1_theta_2",
+          "eft_ext_photon_pt_phi_2_theta_0", "eft_ext_photon_pt_phi_2_theta_1",
+          "eft_ext_photon_pt_phi_2_theta_2"}) {
+      scale(_h[x], 1. / (PI / 3.));
     }
   }
 };
@@ -410,7 +560,7 @@ CMS_2021_PAS_SMP_20_005::WGSystem::WGSystem(Particle const& lep, Particle const&
 
 double CMS_2021_PAS_SMP_20_005::WGSystem::Phi() {
   double lep_phi = r_charged_lepton.phi(PhiMapping::MINUSPI_PLUSPI);
-  return mapAngleMPiToPi(lepton_charge > 0 ? (lep_phi) : (lep_phi + PI));
+  return mapAngleMPiToPi(lepton_charge > 0 ? lep_phi : (lep_phi + PI));
 }
 
 double CMS_2021_PAS_SMP_20_005::WGSystem::SymPhi() {
@@ -422,6 +572,20 @@ double CMS_2021_PAS_SMP_20_005::WGSystem::SymPhi() {
   } else {
     return lep_phi;
   }
+}
+
+double CMS_2021_PAS_SMP_20_005::WGSystem::CosTheta() {
+  const double eta_plus = (lepton_charge > 0) ? r_charged_lepton.eta() : r_neutrino.eta();
+  const double eta_minus = (lepton_charge > 0) ? r_neutrino.eta() : r_charged_lepton.eta();
+  double c = std::tanh((eta_plus - eta_minus) / 2.);
+
+  if (c > 1.) c = 1.;
+  if (c < -1.) c = -1.;
+  return c;
+}
+
+double CMS_2021_PAS_SMP_20_005::WGSystem::Theta() {
+  return std::acos(CosTheta());
 }
 
 RIVET_DECLARE_PLUGIN(CMS_2021_PAS_SMP_20_005);

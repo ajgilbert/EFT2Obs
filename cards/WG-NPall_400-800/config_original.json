@@ -1,0 +1,45 @@
+{
+    "blocks": [
+        "SMEFT"
+    ],
+    "inactive": {
+        "default_val": 0.0,
+        "parameters": []
+    },
+    "parameter_defaults": {
+        "block": "SMEFT",
+        "gen": 0.0,
+        "sm": 0.0,
+        "val": 0.01
+    },
+    "parameters": [
+        {
+            "index": 2,
+            "name": "cw"
+        },
+        {
+            "index": 5,
+            "name": "chdd"
+        },
+        {
+            "index": 9,
+            "name": "chwb"
+        },
+        {
+            "index": 28,
+            "name": "chj3"
+        },
+        {
+            "index": 104,
+            "name": "chl3"
+        },
+        {
+            "index": 107,
+            "name": "cll1"
+        },
+        {
+            "index": 109,
+            "name": "clj3"
+        }
+    ]
+}

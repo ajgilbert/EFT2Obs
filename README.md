@@ -22,6 +22,8 @@ Note that this workflow has only been tested on lxplus so far, and for CMS users
 
 Follow these steps to set up and install the relevant software packages.
 
+Note: For running the WGamma analysis with Rivet v4 in CMSSW to get 3D histograms and extract scaling JSONs from Rivet v4/YODA9 outputs, see the documentation here: `docs/WGammaRivet4Workflow.md`.
+
 ### Software environment
 
 EFT2Obs is officially supported only on EL9/AlmaLinux9 (i.e. the current default lxplus at CERN).
