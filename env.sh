@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 export EFTOBS_LOCAL_LHAPDF=1
 export LHAPDF_CONFIG_PATH="${PWD}/lhapdf/bin/lhapdf-config"
-export PYTHONPATH="${PWD}/$(echo lhapdf/lib64/python*/site-packages):${PYTHONPATH}"
+export PYTHONPATH="${PWD}/$(echo lhapdf/lib*/python*/site-packages):${PYTHONPATH}"
 export LD_LIBRARY_PATH="${PWD}/lhapdf/lib:${LD_LIBRARY_PATH}"
 export RIVET_ANALYSIS_PATH=${PWD}/RivetPlugins
 export MG_DIR="MG5_aMC_v2_9_16"

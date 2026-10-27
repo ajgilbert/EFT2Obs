@@ -46,6 +46,8 @@ rm "${MG_TARBALL}"
 pushd "${MG_DIR}"
   # Use the bundled installer script, not the one downloaded from the server
   tar -zxf vendor/OfflineHEPToolsInstaller.tar.gz -C ../
+  # pythia.org moved its tarballs from /download/ to /releases/
+  sed -i 's#https://pythia.org/download/pythia83#https://pythia.org/releases/pythia83#' ../HEPToolsInstallers/HEPToolInstaller.py
 	./bin/mg5_aMC ../mgconfigscript
 
 if [ -n "${CMSSW_BASE}" ]; then
